@@ -1,0 +1,11 @@
+#!/usr/bin/env php
+<?php
+
+require __DIR__ . '/../vendor/autoload.php';
+
+use NamaeSpace\Application;
+use NamaeSpace\NamaeSpaceCommand;
+
+$app = new Application();
+$app->add(new NamaeSpaceCommand());
+$app->run();

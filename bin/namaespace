@@ -3,6 +3,10 @@
 
 require __DIR__ . '/../vendor/autoload.php';
 
+if (function_exists('xdebug_disable')) {
+    xdebug_disable();
+}
+
 use NamaeSpace\Application;
 use NamaeSpace\NamaeSpaceCommand;
 

@@ -7,9 +7,11 @@ if (function_exists('xdebug_disable')) {
     xdebug_disable();
 }
 
-use NamaeSpace\Application;
-use NamaeSpace\NamaeSpaceCommand;
+use NamaeSpace\Command\FindCommand;
+use Symfony\Component\Console\Application;
+use NamaeSpace\Command\ReplaceCommand;
 
 $app = new Application();
-$app->add(new NamaeSpaceCommand());
+$app->add(new ReplaceCommand());
+$app->add(new FindCommand());
 $app->run();

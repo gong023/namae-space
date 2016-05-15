@@ -1,6 +1,6 @@
 <?php
 
-namespace NamaeSpace;
+namespace NamaeSpace\Visitor;
 
 use PhpParser\Node;
 use PhpParser\Node\Name;

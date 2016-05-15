@@ -7,11 +7,22 @@ if (function_exists('xdebug_disable')) {
     xdebug_disable();
 }
 
-use NamaeSpace\Command\FindCommand;
+use PhpParser\NodeTraverser;
+use PhpParser\NodeVisitor\NameResolver;
+use PhpParser\ParserFactory;
+use PhpParser\PrettyPrinter\Standard;
 use Symfony\Component\Console\Application;
+use Symfony\Component\Finder\Finder;
+use NamaeSpace\Command\FindCommand;
 use NamaeSpace\Command\ReplaceCommand;
 
+$parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP5);
+$traverser = new NodeTraverSer();
+$traverser->addVisitor(new NameResolver());
+$prettyPrinter = new Standard();
+$finder = new Finder();
+
 $app = new Application();
-$app->add(new ReplaceCommand());
-$app->add(new FindCommand());
+$app->add(new ReplaceCommand($parser, $traverser, $prettyPrinter, $finder));
+$app->add(new FindCommand($parser, $traverser, $prettyPrinter, $finder));
 $app->run();

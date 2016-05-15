@@ -6,6 +6,7 @@ use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
+use TurmericSpice\Container\InvalidAttributeException;
 
 /**
  * @property \TurmericSpice\Container $attributes
@@ -38,8 +39,12 @@ class Argument
 
     public function ask($key)
     {
-        $default = $this->attributes->mayHave($key)->asString();
-        $question = new Question("{$key}[default:{$default}]: ", $default);
+        try {
+            $default = $this->attributes->mustHave($key)->asString();
+            $question = new Question("{$key}[default:{$default}]: ", $default);
+        } catch (InvalidAttributeException $e) {
+            $question = new Question("$key: ");
+        }
 
         $value = $this->helper->ask($this->input, $this->output, $question);
         if ($value) {

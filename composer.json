@@ -9,7 +9,6 @@
     "require": {
         "nikic/php-parser": "~2.1",
         "symfony/console": "^3.0",
-        "symfony/finder": "^3.0",
         "sebastian/diff": "^1.4",
         "gong023/turmeric-spice": "^0.2.4",
         "illuminate/filesystem": "^5.2"
@@ -23,6 +22,11 @@
     "autoload": {
         "psr-4": {
             "NamaeSpace\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "NamaeSpace\\": "tests/NamaeSpace"
         }
     }
 }

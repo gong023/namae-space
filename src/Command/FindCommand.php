@@ -9,6 +9,7 @@ use NamaeSpace\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Finder\SplFileInfo;
 
 class FindCommand extends Command
 {
@@ -22,9 +23,9 @@ class FindCommand extends Command
         $this->setName('find')
             ->setDescription('find namespace in path')
             ->addOption('interaction', 'I', InputOption::VALUE_NONE)
-            ->addOption('find_path', 'F', InputOption::VALUE_NONE)
-            ->addOption('exclude_path', 'E', InputOption::VALUE_NONE)
-            ->addOption('find_name_space', 'N', InputOption::VALUE_NONE);
+            ->addOption('find_path', 'F', InputOption::VALUE_OPTIONAL)
+            ->addOption('exclude_path', 'E', InputOption::VALUE_OPTIONAL)
+            ->addOption('find_name_space', 'N', InputOption::VALUE_OPTIONAL);
     }
 
     protected function initialize(InputInterface $input, OutputInterface $output)
@@ -50,17 +51,29 @@ class FindCommand extends Command
 
     public function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->traverser->addVisitor(new NameSpaceFinder(new Name($this->argument->getFindNameSpace())));
+        $findNameSpace = new Name($this->argument->getFindNameSpace());
+        $this->traverser->addVisitor(new NameSpaceFinder($findNameSpace, $output));
+        $findPath = $this->argument->getFindPath();
+        if (strpos($findPath, '.php') !== false) {
+            $this->proc($findPath);
+            return;
+        }
 
         /** @var \Symfony\Component\Finder\SplFileInfo $file */
-        foreach ($this->finder->files()->in($this->argument->getFindPath()) as $file) {
+        foreach ($this->filesystem->allFiles($findPath) as $file) {
             $absoluteFilePathName = $file->getRealPath();
             if (preg_match("/{$this->argument->getExcludePath()}/", $absoluteFilePathName)) {
                 continue;
             }
 
-            $stmts = $this->parser->parse(file_get_contents($absoluteFilePathName));
-            $this->traverser->traverse($stmts);
+            $this->proc($absoluteFilePathName);
         }
+    }
+
+    private function proc($filePath)
+    {
+        $stmts = $this->parser->parse($this->filesystem->get($filePath));
+        NameSpaceFinder::$filePath = $filePath;
+        $this->traverser->traverse($stmts);
     }
 }

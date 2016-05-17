@@ -3,16 +3,17 @@
 
 require __DIR__ . '/../vendor/autoload.php';
 
-if (function_exists('xdebug_disable')) {
-    xdebug_disable();
-}
+ini_set('xdebug.max_nesting_level', 3000);
+ini_set('xdebug.var_display_max_children', -1);
+ini_set('xdebug.var_display_max_data', -1);
+ini_set('xdebug.var_display_max_depth', -1);
 
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\ParserFactory;
 use PhpParser\PrettyPrinter\Standard;
 use Symfony\Component\Console\Application;
-use Symfony\Component\Finder\Finder;
+use Illuminate\Filesystem\Filesystem;
 use NamaeSpace\Command\FindCommand;
 use NamaeSpace\Command\ReplaceCommand;
 
@@ -20,9 +21,9 @@ $parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP5);
 $traverser = new NodeTraverSer();
 $traverser->addVisitor(new NameResolver());
 $prettyPrinter = new Standard();
-$finder = new Finder();
+$fileSystem = new Filesystem();
 
 $app = new Application();
-$app->add(new ReplaceCommand($parser, $traverser, $prettyPrinter, $finder));
-$app->add(new FindCommand($parser, $traverser, $prettyPrinter, $finder));
+$app->add(new ReplaceCommand($parser, $traverser, $prettyPrinter, $fileSystem));
+$app->add(new FindCommand($parser, $traverser, $prettyPrinter, $fileSystem));
 $app->run();

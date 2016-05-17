@@ -61,7 +61,7 @@ class ReplaceCommand extends Command
         $this->traverser->addVisitor(new NameSpaceConverter($beforeNameSpace, $afterNameSpace));
 
         $findPath = $this->argument->getFindPath();
-        if (strpos('.php', $findPath) !== false) {
+        if (strpos($findPath, '.php') !== false) {
             file_get_contents($findPath);
         }
 

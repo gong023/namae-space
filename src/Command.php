@@ -2,8 +2,8 @@
 
 namespace NamaeSpace;
 
+use Illuminate\Filesystem\Filesystem;
 use Symfony\Component\Console\Command\Command as BaseCommand;
-use Symfony\Component\Finder\Finder;
 use PhpParser\NodeTraverser;
 use PhpParser\Parser;
 use PhpParser\PrettyPrinter\Standard;
@@ -22,25 +22,26 @@ class Command extends BaseCommand
     protected $traverser;
 
     /**
-     * @var Finder
-     */
-    protected $finder;
-
-    /**
      * @var Standard
      */
     protected $prettyPrinter;
+
+    /**
+     * @var Filesystem
+     */
+    protected $filesystem;
 
     public function __construct(
         Parser $parser,
         NodeTraverser $traverser,
         Standard $prettyPrinter,
-        Finder $finder
+        Filesystem $filesystem
     ) {
         $this->parser = $parser;
         $this->traverser = $traverser;
-        $this->finder = $finder;
         $this->prettyPrinter = $prettyPrinter;
+        $this->filesystem = $filesystem;
+        parent::__construct();
     }
 
 }

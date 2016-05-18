@@ -3,20 +3,59 @@
 namespace NamaeSpace\Command;
 
 use NamaeSpace\Command\Argument\FindArgument;
-use NamaeSpace\Visitor\NameSpaceFinder;
+use NamaeSpace\Visitor\FindVisitor;
+use NamaeSpace\Stream\FileStream;
 use PhpParser\Node\Name;
-use NamaeSpace\Command;
+use PhpParser\NodeTraverser;
+use PhpParser\Parser;
+use PhpParser\PrettyPrinter\Standard;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Finder\SplFileInfo;
 
+/**
+ * less function call and instantiate
+ */
 class FindCommand extends Command
 {
     /**
      * @var FindArgument
      */
     private $argument;
+
+    /**
+     * @var Parser
+     */
+    protected $parser;
+
+    /**
+     * @var NodeTraverser
+     */
+    protected $traverser;
+
+    /**
+     * @var Standard
+     */
+    protected $prettyPrinter;
+
+    /**
+     * @var FileStream
+     */
+    protected $fileStream;
+
+    public function __construct(
+        Parser $parser,
+        NodeTraverser $traverser,
+        Standard $prettyPrinter,
+        FileStream $fileStream
+    ) {
+        $this->parser = $parser;
+        $this->traverser = $traverser;
+        $this->prettyPrinter = $prettyPrinter;
+        $this->fileStream = $fileStream;
+        parent::__construct();
+    }
 
     protected function configure()
     {
@@ -52,7 +91,7 @@ class FindCommand extends Command
     public function execute(InputInterface $input, OutputInterface $output)
     {
         $findNameSpace = new Name($this->argument->getFindNameSpace());
-        $this->traverser->addVisitor(new NameSpaceFinder($findNameSpace, $output));
+        $this->traverser->addVisitor(new FindVisitor($findNameSpace, $output));
         $findPath = $this->argument->getFindPath();
         if (strpos($findPath, '.php') !== false) {
             $this->proc($findPath);
@@ -60,7 +99,7 @@ class FindCommand extends Command
         }
 
         /** @var \Symfony\Component\Finder\SplFileInfo $file */
-        foreach ($this->filesystem->allFiles($findPath) as $file) {
+        foreach ($this->fileStream->findFiles($findPath) as $file) {
             $absoluteFilePathName = $file->getRealPath();
             if (preg_match("/{$this->argument->getExcludePath()}/", $absoluteFilePathName)) {
                 continue;
@@ -72,8 +111,8 @@ class FindCommand extends Command
 
     private function proc($filePath)
     {
-        $stmts = $this->parser->parse($this->filesystem->get($filePath));
-        NameSpaceFinder::$filePath = $filePath;
+        $stmts = $this->parser->parse($this->fileStream->get($filePath));
+        FindVisitor::$filePath = $filePath;
         $this->traverser->traverse($stmts);
     }
 }

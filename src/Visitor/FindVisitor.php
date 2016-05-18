@@ -10,7 +10,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * as quick as possible
  */
-class NameSpaceFinder extends NodeVisitorAbstract
+class FindVisitor extends NodeVisitorAbstract
 {
     public static $filePath;
 

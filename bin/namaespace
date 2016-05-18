@@ -8,22 +8,29 @@ ini_set('xdebug.var_display_max_children', -1);
 ini_set('xdebug.var_display_max_data', -1);
 ini_set('xdebug.var_display_max_depth', -1);
 
+use NamaeSpace\Stream\FileStream;
+use NamaeSpace\Stream\StdStream;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\ParserFactory;
 use PhpParser\PrettyPrinter\Standard;
+use SebastianBergmann\Diff\Differ;
 use Symfony\Component\Console\Application;
-use Illuminate\Filesystem\Filesystem;
+use Symfony\Component\Finder\Finder;
 use NamaeSpace\Command\FindCommand;
 use NamaeSpace\Command\ReplaceCommand;
+use NamaeSpace\NodeBuilder\ReplaceNodeBuilder;
 
 $parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP5);
 $traverser = new NodeTraverSer();
 $traverser->addVisitor(new NameResolver());
 $prettyPrinter = new Standard();
-$fileSystem = new Filesystem();
+$finder = new Finder();
+$replaceNodeBuilder = new ReplaceNodeBuilder($parser, $traverser);
+$fileSystem = new FileStream($finder, $prettyPrinter);
+$stdStream = new StdStream(new Differ());
 
 $app = new Application();
-$app->add(new ReplaceCommand($parser, $traverser, $prettyPrinter, $fileSystem));
+$app->add(new ReplaceCommand($replaceNodeBuilder, $fileSystem, $stdStream));
 $app->add(new FindCommand($parser, $traverser, $prettyPrinter, $fileSystem));
 $app->run();

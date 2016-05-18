@@ -3,9 +3,12 @@
 namespace NamaeSpace\Command;
 
 use NamaeSpace\Command\Argument\ReplaceArgument;
-use NamaeSpace\Visitor\NameSpaceConverter;
+use NamaeSpace\NodeBuilder\ReplaceNodeBuilder;
+use NamaeSpace\Stream\FileStream;
+use NamaeSpace\Stream\StdStream;
+use NamaeSpace\Visitor\ReplaceVisitor;
 use PhpParser\Node\Name;
-use NamaeSpace\Command;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -15,7 +18,31 @@ class ReplaceCommand extends Command
     /**
      * @var ReplaceArgument
      */
-    private $argument;
+    private $argument = null;
+
+    /**
+     * @var ReplaceNodeBuilder
+     */
+    private $nodeBuilder;
+    /**
+     * @var FileStream
+     */
+    private $fileStream;
+    /**
+     * @var StdStream
+     */
+    private $stdStream;
+
+    public function __construct(
+        ReplaceNodeBuilder $nodeBuilder,
+        FileStream $fileStream,
+        StdStream $stdStream
+    ) {
+        parent::__construct();
+        $this->nodeBuilder = $nodeBuilder;
+        $this->fileStream = $fileStream;
+        $this->stdStream = $stdStream;
+    }
 
     protected function configure()
     {
@@ -23,10 +50,11 @@ class ReplaceCommand extends Command
             ->setName('replace')
             ->setDescription('replace namespace')
             ->addOption('interaction', 'I', InputOption::VALUE_NONE)
-            ->addOption('find_path', 'F', InputOption::VALUE_NONE)
-            ->addOption('exclude_path', 'E', InputOption::VALUE_NONE)
-            ->addOption('before_name_space', 'B', InputOption::VALUE_NONE)
-            ->addOption('after_name_space', 'A', InputOption::VALUE_NONE);
+            ->addOption('find_path', 'F', InputOption::VALUE_OPTIONAL)
+            ->addOption('exclude_path', 'E', InputOption::VALUE_OPTIONAL)
+            ->addOption('autoload_base_path', 'P', InputOption::VALUE_OPTIONAL)
+            ->addOption('before_name_space', 'B', InputOption::VALUE_OPTIONAL)
+            ->addOption('after_name_space', 'A', InputOption::VALUE_OPTIONAL);
     }
 
     protected function initialize(InputInterface $input, OutputInterface $output)
@@ -58,26 +86,35 @@ class ReplaceCommand extends Command
     {
         $afterNameSpace = new Name($this->argument->getAfterNameSpace());
         $beforeNameSpace = new Name($this->argument->getBeforeNameSpace());
-        $this->traverser->addVisitor(new NameSpaceConverter($beforeNameSpace, $afterNameSpace));
+        $this->nodeBuilder->addVisitor(new ReplaceVisitor($beforeNameSpace, $afterNameSpace));
 
         $findPath = $this->argument->getFindPath();
         if (strpos($findPath, '.php') !== false) {
-            file_get_contents($findPath);
+            $this->proc($findPath);
+            return;
         }
 
         /** @var \Symfony\Component\Finder\SplFileInfo $file */
-        foreach ($this->finder->files()->in($findPath) as $file) {
+        foreach ($this->fileStream->findFiles($findPath) as $file) {
             $absoluteFilePathName = $file->getRealPath();
             if (preg_match("/{$this->argument->getExcludePath()}/", $absoluteFilePathName)) {
                 continue;
             }
 
-            $stmts = $this->parser->parse(file_get_contents($absoluteFilePathName));
-            $stmts = $this->traverser->traverse($stmts);
+            $this->proc($findPath);
+        }
+    }
 
-            $code = $this->prettyPrinter->prettyPrintFile($stmts);
-
-            echo $code;
+    private function proc($filePath)
+    {
+        $rawCode = $this->fileStream->get($filePath);
+        $node = $this->nodeBuilder->traverse($rawCode);
+//        if ($this->argument->isDryRun()) {
+        if (true) {
+            $replacedCode = $this->fileStream->getPrettyPrinter()->prettyPrintFile($node);
+            $this->stdStream->putDiff($rawCode, $replacedCode);
+        } else {
+            // TODO
         }
     }
 }

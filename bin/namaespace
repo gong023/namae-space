@@ -14,6 +14,7 @@ use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\ParserFactory;
 use PhpParser\PrettyPrinter\Standard;
+use PhpParser\Lexer;
 use SebastianBergmann\Diff\Differ;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Finder\Finder;
@@ -21,10 +22,13 @@ use NamaeSpace\Command\FindCommand;
 use NamaeSpace\Command\ReplaceCommand;
 use NamaeSpace\NodeBuilder\ReplaceNodeBuilder;
 
-$parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP5);
+$lexer = new Lexer(['usedAttributes' => [
+    'startLine', 'startFilePos', 'endFilePos'
+]]);
+$parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP5, $lexer);
 $traverser = new NodeTraverSer();
 $traverser->addVisitor(new NameResolver());
-$prettyPrinter = new Standard();
+$prettyPrinter = new Standard(['shortArraySyntax' => true]);
 $finder = new Finder();
 $replaceNodeBuilder = new ReplaceNodeBuilder($parser, $traverser);
 $fileSystem = new FileStream($finder, $prettyPrinter);

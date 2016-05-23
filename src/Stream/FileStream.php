@@ -56,6 +56,17 @@ class FileStream
         return file_get_contents($fileName);
     }
 
+    public function getLines($fileName)
+    {
+        $file = new \SplFileObject($fileName);
+        $lines = [];
+        while (! $file->eof()) {
+            $lines[$file->key()] = $file->fgets();
+        }
+
+        return $lines;
+    }
+
     public function getPrettyPrinter()
     {
         return $this->prettyPrinter;

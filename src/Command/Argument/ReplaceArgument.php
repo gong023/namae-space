@@ -13,6 +13,6 @@ class ReplaceArgument extends Argument
         mustHaveAsString as public getAutoloadBasePath;
         mustHaveAsString as public getBeforeNameSpace;
         mustHaveAsString as public getAfterNameSpace;
-        mayHaveAsBoolean as public IsDryRun;
+        mayHaveAsBoolean as public isDryRun;
     }
 }

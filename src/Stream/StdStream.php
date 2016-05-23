@@ -25,6 +25,9 @@ class StdStream
 
     public function putDiff($from, $to)
     {
+        if ($from === $to) {
+            return;
+        }
         $this->put($this->differ->diff($from, $to));
     }
 }

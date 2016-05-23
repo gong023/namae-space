@@ -24,10 +24,12 @@ class ReplaceCommand extends Command
      * @var ReplaceNodeBuilder
      */
     private $nodeBuilder;
+
     /**
      * @var FileStream
      */
     private $fileStream;
+
     /**
      * @var StdStream
      */
@@ -60,13 +62,8 @@ class ReplaceCommand extends Command
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $excludePath = ($input->getOption('exclude_path')) ? $input->getOption('exclude_path') : 'vendor';
-        $this->argument = new ReplaceArgument([
-            'find_path'          => $input->getOption('find_path'),
-            'exclude_path'       => $excludePath,
-            'autoload_base_path' => $input->getOption('autoload_base_path'),
-            'before_name_space'  => $input->getOption('before_name_space'),
-            'after_name_space'   => $input->getOption('after_name_space'),
-        ]);
+        $options = array_merge($input->getOptions(), ['exclude_path' => $excludePath]);
+        $this->argument = new ReplaceArgument($options);
     }
 
     protected function interact(InputInterface $input, OutputInterface $output)
@@ -86,35 +83,44 @@ class ReplaceCommand extends Command
     {
         $afterNameSpace = new Name($this->argument->getAfterNameSpace());
         $beforeNameSpace = new Name($this->argument->getBeforeNameSpace());
-        $this->nodeBuilder->addVisitor(new ReplaceVisitor($beforeNameSpace, $afterNameSpace));
+        $this->nodeBuilder->addVisitor(new ReplaceVisitor($beforeNameSpace));
 
         $findPath = $this->argument->getFindPath();
         if (strpos($findPath, '.php') !== false) {
-            $this->proc($findPath);
+            $this->proc($findPath, $beforeNameSpace, $afterNameSpace);
             return;
         }
 
         /** @var \Symfony\Component\Finder\SplFileInfo $file */
         foreach ($this->fileStream->findFiles($findPath) as $file) {
-            $absoluteFilePathName = $file->getRealPath();
-            if (preg_match("/{$this->argument->getExcludePath()}/", $absoluteFilePathName)) {
+            $realPath = $file->getRealPath();
+            if (preg_match("/{$this->argument->getExcludePath()}/", $realPath)) {
                 continue;
             }
 
-            $this->proc($findPath);
+            $this->proc($realPath, $beforeNameSpace, $afterNameSpace);
         }
     }
 
-    private function proc($filePath)
+    private function proc($filePath, Name $beforeNameSpace, Name $afterNameSpace)
     {
         $rawCode = $this->fileStream->get($filePath);
-        $node = $this->nodeBuilder->traverse($rawCode);
-//        if ($this->argument->isDryRun()) {
-        if (true) {
-            $replacedCode = $this->fileStream->getPrettyPrinter()->prettyPrintFile($node);
-            $this->stdStream->putDiff($rawCode, $replacedCode);
-        } else {
-            // TODO
+        $this->nodeBuilder->traverse($rawCode);
+        if (ReplaceVisitor::$findLines['names']) {
+            $code = [];
+            foreach (explode("\n", $rawCode) as $index => $line) {
+                if (! in_array($index + 1, ReplaceVisitor::$findLines['names'], true)) {
+                    $code[] = $line;
+                    continue;
+                }
+                $code[] = str_replace($beforeNameSpace->getLast(), $afterNameSpace->getLast(), $line);
+            }
+            $toCode = implode("\n", $code);
+
+            if ($this->argument->isDryRun()) {
+                $this->stdStream->putDiff($rawCode, $toCode);
+            }
         }
+        ReplaceVisitor::$findLines = [];
     }
 }

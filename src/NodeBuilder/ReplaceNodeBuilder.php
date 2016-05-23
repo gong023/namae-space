@@ -39,7 +39,8 @@ class ReplaceNodeBuilder
      */
     public function traverse($code)
     {
-        $nodes = $this->traverser->traverse($this->parser->parse($code));
+        $nodes = $this->parser->parse($code);
+        $nodes = $this->traverser->traverse($nodes);
 
         return $nodes;
     }

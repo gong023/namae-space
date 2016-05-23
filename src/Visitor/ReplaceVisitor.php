@@ -9,46 +9,27 @@ use PhpParser\Node\Stmt;
 
 class ReplaceVisitor extends NodeVisitorAbstract
 {
-    private $beforeNameSpace;
-    private $afterNameSpace;
+    public static $findLines = [];
 
-    public function __construct(Name $beforeNameSpace, Name $afterNameSpace)
+    private $beforeNameSpace;
+
+    public function __construct(Name $beforeNameSpace)
     {
         $this->beforeNameSpace = $beforeNameSpace;
-        $this->afterNameSpace = $afterNameSpace;
     }
 
     public function leaveNode(Node $node)
     {
-        if ($node instanceof Node\Name) {
-            if ($node->toString() === $this->beforeNameSpace->toString()) {
-                $alterNode = $this->afterNameSpace;
-            } else {
-                $alterNode = $node;
-            }
-            $nameString = $alterNode->isUnqualified() ? $alterNode->toString() : $alterNode->getLast();
-
-            return new Name($nameString);
+        if ($node instanceof Name && $node->toString() === $this->beforeNameSpace->toString()) {
+            self::$findLines['names'][] = $node->getLine();
+        } elseif ($node instanceof Stmt\Namespace_) {
+            self::$findLines['namespace'] = $node->getLine();
+        } elseif ($node instanceof Stmt\Class_) {
+            self::$findLines['classes'][] = $node->getLine();
+        } elseif ($node instanceof Stmt\Use_) {
+            self::$findLines['uses'][] = $node->getLine();
         }
 
         return null;
     }
-
-//    public function afterTraverse(array $nodes)
-//    {
-//        foreach ($nodes as $node) {
-//            /** @var Stmt\Namespace_ $node */
-//            if ($node instanceof Stmt\Namespace_) {
-//                $use = new Stmt\Use_([new Stmt\UseUse($this->afterNameSpace)]);
-//
-//                $node->stmts = array_merge([$use], $node->stmts);
-//            }
-//        }
-//
-//        /** @var Node $node */
-//        foreach ($nodes as $node) {
-//            if ($node->getLine() === 1) {
-//            }
-//        }
-//    }
 }

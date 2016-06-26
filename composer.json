@@ -7,17 +7,14 @@
         }
     ],
     "require": {
-        "nikic/php-parser": "~2.1",
-        "symfony/console": "^3.0",
-        "sebastian/diff": "^1.4",
-        "gong023/turmeric-spice": "^0.2.4",
-        "illuminate/filesystem": "^5.2"
+        "php": ">=5.4",
+        "nikic/php-parser": "2.1.0",
+        "symfony/console": "2.8.*",
+        "sebastian/diff": "1.4.*"
     },
     "require-dev": {
         "phpunit/phpunit": "4.8.*",
-        "fabpot/php-cs-fixer": "1.*",
-        "satooshi/php-coveralls": "~1.0",
-        "gong023/assert_chain": "0.1.0"
+        "satooshi/php-coveralls": "~1.0"
     },
     "autoload": {
         "psr-4": {

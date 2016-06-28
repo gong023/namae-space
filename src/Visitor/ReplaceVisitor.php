@@ -21,13 +21,13 @@ class ReplaceVisitor extends NodeVisitorAbstract
     public function leaveNode(Node $node)
     {
         if ($node instanceof Name && $node->toString() === $this->beforeNameSpace->toString()) {
-            self::$findLines['names'][] = $node->getLine();
+            self::$findLines['names'][] = $node->getAttributes();
         } elseif ($node instanceof Stmt\Namespace_) {
-            self::$findLines['namespace'] = $node->getLine();
+            self::$findLines['namespace'] = $node->getAttributes('startFilePos');
         } elseif ($node instanceof Stmt\Class_) {
-            self::$findLines['classes'][] = $node->getLine();
+            self::$findLines['classes'][] = $node->getAttributes('startFilePos');
         } elseif ($node instanceof Stmt\Use_) {
-            self::$findLines['uses'][] = $node->getLine();
+            self::$findLines['uses'][] = $node->getAttributes('startFilePos');
         }
 
         return null;

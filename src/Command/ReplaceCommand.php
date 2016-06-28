@@ -2,125 +2,88 @@
 
 namespace NamaeSpace\Command;
 
-use NamaeSpace\Command\Argument\ReplaceArgument;
-use NamaeSpace\NodeBuilder\ReplaceNodeBuilder;
-use NamaeSpace\Stream\FileStream;
-use NamaeSpace\Stream\StdStream;
+use NamaeSpace\ComposerContent;
 use NamaeSpace\Visitor\ReplaceVisitor;
+use PhpParser\Lexer;
 use PhpParser\Node\Name;
+use PhpParser\NodeTraverser;
+use PhpParser\NodeVisitor\NameResolver;
+use PhpParser\ParserFactory;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Question\Question;
 
 class ReplaceCommand extends Command
 {
     /**
-     * @var ReplaceArgument
+     * @var \PHPParser\Parser\Php5
      */
-    private $argument = null;
+    private $parser;
 
     /**
-     * @var ReplaceNodeBuilder
+     * @var NodeTraverser
      */
-    private $nodeBuilder;
-
-    /**
-     * @var FileStream
-     */
-    private $fileStream;
-
-    /**
-     * @var StdStream
-     */
-    private $stdStream;
-
-    public function __construct(
-        ReplaceNodeBuilder $nodeBuilder,
-        FileStream $fileStream,
-        StdStream $stdStream
-    ) {
-        parent::__construct();
-        $this->nodeBuilder = $nodeBuilder;
-        $this->fileStream = $fileStream;
-        $this->stdStream = $stdStream;
-    }
+    private $traverser;
 
     protected function configure()
     {
         $this
             ->setName('replace')
             ->setDescription('replace namespace')
-            ->addOption('interaction', 'I', InputOption::VALUE_NONE)
-            ->addOption('find_path', 'F', InputOption::VALUE_OPTIONAL)
-            ->addOption('exclude_path', 'E', InputOption::VALUE_OPTIONAL)
-            ->addOption('autoload_base_path', 'P', InputOption::VALUE_OPTIONAL)
-            ->addOption('before_name_space', 'B', InputOption::VALUE_OPTIONAL)
-            ->addOption('after_name_space', 'A', InputOption::VALUE_OPTIONAL);
+            ->addOption('composer_json', 'C', InputOption::VALUE_OPTIONAL)
+            ->addOption('additional_path', 'A', InputOption::VALUE_OPTIONAL)
+            ->addOption('target_namespace', 'T', InputOption::VALUE_OPTIONAL)
+            ->addOption('new_namespace', 'N', InputOption::VALUE_OPTIONAL)
+            ->addOption('dry_run', 'D', InputOption::VALUE_OPTIONAL)
+            ->addOption('help', 'H', InputOption::VALUE_OPTIONAL);
     }
 
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
-        $excludePath = ($input->getOption('exclude_path')) ? $input->getOption('exclude_path') : 'vendor';
-        $options = array_merge($input->getOptions(), ['exclude_path' => $excludePath]);
-        $this->argument = new ReplaceArgument($options);
+        $lexer = new Lexer(['usedAttributes' => [
+            'startLine', 'startFilePos', 'endFilePos'
+        ]]);
+        $this->parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP5, $lexer);
+        $this->traverser = new NodeTraverSer();
+        $this->traverser->addVisitor(new NameResolver());
     }
 
     protected function interact(InputInterface $input, OutputInterface $output)
     {
-        if ($input->getOption('interaction')) {
-            $this->argument
-                ->setHelper($this->getHelper('question'), $input, $output)
-                ->ask('find_path')
-                ->ask('exclude_path')
-                ->ask('autoload_base_path')
-                ->ask('before_name_space')
-                ->ask('after_name_space');
+        /** @var QuestionHelper $helper */
+        $helper = $this->getHelper('question');
+
+        if (! $input->getOption('composer_json')) {
+            if (file_exists(__DIR__ . '/../composer.json')) {
+                $input->setOption('composer_json', __DIR__ . '/../composer.json');
+            } else {
+                $question = (new Question('composer.json path: '))
+                    ->setValidator(['\\NamaeSpace\\ComposerContent', 'validateExists']);
+                $input->setOption('composer_json', $helper->ask($input, $output, $question));
+            }
+        }
+
+        if (! $input->getOption('target_namespace')) {
+            $targetNameSpace = $helper->ask($input, $output, new Question('target name space: '));
+            $input->setOption('target_namespace', $targetNameSpace);
+        }
+
+        if (! $input->getOption('new_namespace')) {
+            $newNameSpace = $helper->ask($input, $output, new Question('new name space: '));
+            $input->setOption('new_namespace', $newNameSpace);
         }
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $afterNameSpace = new Name($this->argument->getAfterNameSpace());
-        $beforeNameSpace = new Name($this->argument->getBeforeNameSpace());
-        $this->nodeBuilder->addVisitor(new ReplaceVisitor($beforeNameSpace));
+        $targetNameSpace = new Name($input->getOption('target_namespace'));
+        $newNameSpace = new Name($input->getOption('new_namespace'));
+        $this->traverser->addVisitor(new ReplaceVisitor($newNameSpace));
 
-        $findPath = $this->argument->getFindPath();
-        if (strpos($findPath, '.php') !== false) {
-            $this->proc($findPath, $beforeNameSpace, $afterNameSpace);
-            return;
-        }
+        $composerContent = ComposerContent::instantiate($input->getOption('composer_json'));
 
-        /** @var \Symfony\Component\Finder\SplFileInfo $file */
-        foreach ($this->fileStream->findFiles($findPath) as $file) {
-            $realPath = $file->getRealPath();
-            if (preg_match("/{$this->argument->getExcludePath()}/", $realPath)) {
-                continue;
-            }
-
-            $this->proc($realPath, $beforeNameSpace, $afterNameSpace);
-        }
-    }
-
-    private function proc($filePath, Name $beforeNameSpace, Name $afterNameSpace)
-    {
-        $rawCode = $this->fileStream->get($filePath);
-        $this->nodeBuilder->traverse($rawCode);
-        if (ReplaceVisitor::$findLines['names']) {
-            $code = [];
-            foreach (explode("\n", $rawCode) as $index => $line) {
-                if (! in_array($index + 1, ReplaceVisitor::$findLines['names'], true)) {
-                    $code[] = $line;
-                    continue;
-                }
-                $code[] = str_replace($beforeNameSpace->getLast(), $afterNameSpace->getLast(), $line);
-            }
-            $toCode = implode("\n", $code);
-
-            if ($this->argument->isDryRun()) {
-                $this->stdStream->putDiff($rawCode, $toCode);
-            }
-        }
-        ReplaceVisitor::$findLines = [];
     }
 }

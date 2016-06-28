@@ -4,11 +4,9 @@ namespace NamaeSpace\Command;
 
 use NamaeSpace\Command\Argument\FindArgument;
 use NamaeSpace\Visitor\FindVisitor;
-use NamaeSpace\Stream\FileStream;
 use PhpParser\Node\Name;
 use PhpParser\NodeTraverser;
 use PhpParser\Parser;
-use PhpParser\PrettyPrinter\Standard;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -34,26 +32,12 @@ class FindCommand extends Command
      */
     protected $traverser;
 
-    /**
-     * @var Standard
-     */
-    protected $prettyPrinter;
-
-    /**
-     * @var FileStream
-     */
-    protected $fileStream;
-
     public function __construct(
         Parser $parser,
-        NodeTraverser $traverser,
-        Standard $prettyPrinter,
-        FileStream $fileStream
+        NodeTraverser $traverser
     ) {
         $this->parser = $parser;
         $this->traverser = $traverser;
-        $this->prettyPrinter = $prettyPrinter;
-        $this->fileStream = $fileStream;
         parent::__construct();
     }
 

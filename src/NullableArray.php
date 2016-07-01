@@ -18,6 +18,6 @@ class NullableArray
 
     public function __get($name)
     {
-        return null;
+        return new NullObject();
     }
 }

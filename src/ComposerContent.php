@@ -20,22 +20,40 @@ class ComposerContent
         $this->realDirPath = $realDirPath;
     }
 
-    public function getPsr4Dirs()
+    public function getClassmapDirs()
     {
-        $dirs = (array)$this->content->autoload->psr_4;
-        $dirs = array_map(function ($dir) {
-            return $this->realDirPath . '/' . $dir;
-        }, $dirs);
+        $classmap = array_merge(
+            array_values((array)$this->content->autoload->classmap),
+            array_values((array)$this->content->autoload_dev->classmap)
+        );
 
-        return array_unique(array_values($dirs));
+        return $this->concatWithRealPath($classmap);
     }
 
-    public function get()
+    public function getFiles()
     {
-        return (array)$this->content->autoload->psr_0
-            + (array)$this->content->autoload->psr_4
-            + (array)$this->content->autoload->classmap
-            + (array)$this->content->autoload->include_path;
+        $files = array_merge(
+            array_values((array)$this->content->autoload->files),
+            array_values((array)$this->content->autoload_dev->files)
+        );
+
+        return $this->concatWithRealPath($files);
+    }
+
+    public function getPsr4Dirs()
+    {
+        $psr4 = array_merge((array)$this->content->autoload->psr_4, (array)$this->content->autoload_dev->psr_4);
+        $psr4 = $this->concatWithRealPath($psr4);
+
+        return array_unique(array_values($psr4));
+    }
+
+
+    private function concatWithRealPath($dirs)
+    {
+        return array_map(function ($dir) {
+            return $this->realDirPath . '/' . $dir;
+        }, $dirs);
     }
 
     public static function validateExists($input)

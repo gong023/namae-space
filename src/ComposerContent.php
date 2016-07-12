@@ -22,38 +22,49 @@ class ComposerContent
 
     public function getClassmapDirs()
     {
-        $classmap = array_merge(
-            array_values((array)$this->content->autoload->classmap),
-            array_values((array)$this->content->autoload_dev->classmap)
+        return $this->concatWithRealPath(
+            (array)$this->content->autoload->classmap,
+            (array)$this->content->autoload_dev->classmap
         );
-
-        return $this->concatWithRealPath($classmap);
     }
 
     public function getFiles()
     {
-        $files = array_merge(
-            array_values((array)$this->content->autoload->files),
-            array_values((array)$this->content->autoload_dev->files)
+        return $this->concatWithRealPath(
+            (array)$this->content->autoload->files,
+            (array)$this->content->autoload_dev->files
         );
-
-        return $this->concatWithRealPath($files);
     }
 
     public function getPsr4Dirs()
     {
-        $psr4 = array_merge((array)$this->content->autoload->psr_4, (array)$this->content->autoload_dev->psr_4);
-        $psr4 = $this->concatWithRealPath($psr4);
-
-        return array_unique(array_values($psr4));
+        return $this->concatWithRealPath(
+            (array)$this->content->autoload->psr_4,
+            (array)$this->content->autoload_dev->psr_4
+        );
     }
 
-
-    private function concatWithRealPath($dirs)
+    private function concatWithRealPath(array $autoload, array $autoloadDev)
     {
+        $dirs = array_merge(
+            $this->flatternValues($autoload),
+            $this->flatternValues($autoloadDev)
+        );
+
         return array_map(function ($dir) {
             return $this->realDirPath . '/' . $dir;
         }, $dirs);
+    }
+
+    private function flatternValues(array $array)
+    {
+        $values = [];
+        $iterator = new \RecursiveIteratorIterator(new \RecursiveArrayIterator($array));
+        foreach ($iterator as $value) {
+            $values[] = $value;
+        }
+
+        return $values;
     }
 
     public static function validateExists($input)

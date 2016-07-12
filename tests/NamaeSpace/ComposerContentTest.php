@@ -9,9 +9,8 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
      * @param $autoload
      * @param $expected
      */
-    public function testPsr4Dirs($autoload,  $expected)
+    public function testPsr4Dirs($autoload, $expected)
     {
-        $this->markTestIncomplete();
         $content = new ComposerContent('basePath', new NullableArray($autoload));
 
         $this->assertSame($expected, $content->getPsr4Dirs());
@@ -22,13 +21,35 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
         return [
             'plain' => [
                 [
-                    'psr-4' => ['Foo' => 'src/', 'Bar' => 'app/']
+                    'autoload' => [
+                        'psr-4' => ['Foo' => 'src/', 'Bar' => 'app/']
+                    ],
+                    'autoload_dev' => [
+                        'psr-4' => ['Foo\\Tests' => 'tests/']
+                    ],
                 ],
                 [
-                    'psr-4' => ['Foo\\Tests' => 'tests/']
+                    'basePath/src/', 'basePath/app/', 'basePath/tests/',
+                ]
+            ],
+            'without_autoload_dev' => [
+                [
+                    'autoload' => [
+                        'psr-4' => ['Foo' => 'src/', 'Bar' => 'app/']
+                    ],
                 ],
                 [
-                    'basePath/src/', 'basePath/app/', 'basePath/tests',
+                    'basePath/src/', 'basePath/app/',
+                ]
+            ],
+            'multiple_dirs' => [
+                [
+                    'autoload' => [
+                        'psr-4' => [ 'Foo' => ['src/', 'lib/'] ]
+                    ],
+                ],
+                [
+                    'basePath/src/', 'basePath/lib/',
                 ]
             ],
             'undefined' => [

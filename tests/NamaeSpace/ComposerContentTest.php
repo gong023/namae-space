@@ -24,7 +24,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
                     'autoload' => [
                         'psr-0' => ['Foo' => 'src/', 'Bar' => 'app/']
                     ],
-                    'autoload_dev' => [
+                    'autoload-dev' => [
                         'psr-0' => ['Foo\\Tests' => 'tests/']
                     ],
                 ],
@@ -88,7 +88,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
                     'autoload' => [
                         'psr-4' => ['Foo' => 'src/', 'Bar' => 'app/']
                     ],
-                    'autoload_dev' => [
+                    'autoload-dev' => [
                         'psr-4' => ['Foo\\Tests' => 'tests/']
                     ],
                 ],
@@ -131,7 +131,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
     {
         $content = new ComposerContent('basePath', new NullableArray($autoload));
 
-        $this->assertSame($expected, $content->getClassmapDirs());
+        $this->assertSame($expected, $content->getClassmapValues());
     }
 
     public static function classMapProvider()
@@ -142,7 +142,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
                     'autoload' => [
                         'classmap' => ['src/', 'Something.php'],
                     ],
-                    'autoload_dev' => [
+                    'autoload-dev' => [
                         'classmap' => ['C.php'],
                     ],
                 ],
@@ -175,7 +175,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
     {
         $content = new ComposerContent('basePath', new NullableArray($autoload));
 
-        $this->assertSame($expected, $content->getFiles());
+        $this->assertSame($expected, $content->getFilesValues());
     }
 
     public static function filesProvider()
@@ -186,7 +186,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
                     'autoload' => [
                         'files' => ['A.php', 'B.php'],
                     ],
-                    'autoload_dev' => [
+                    'autoload-dev' => [
                         'files' => ['C.php'],
                     ],
                 ],
@@ -208,5 +208,61 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
                 [], []
             ]
         ];
+    }
+
+    /**
+     * @dataProvider includePathProvider
+     * @param $includePath
+     * @param $expected
+     */
+    public function testIncludePathDirs($includePath, $expected)
+    {
+        $content = new ComposerContent('basePath', new NullableArray($includePath));
+
+        $this->assertSame($expected, $content->getIncludePathDirs());
+    }
+
+    public static function includePathProvider()
+    {
+        return [
+            'plain' => [
+                [
+                    'include-path' => ['lib/', 'src/'],
+                ],
+                [
+                    'basePath/lib/', 'basePath/src/',
+                ]
+            ],
+            'undefined' => [
+                [], []
+            ]
+        ];
+    }
+
+    public function testGetPathAndDirs()
+    {
+        $content = new ComposerContent('basePath', new NullableArray([
+            'autoload' => [
+                'psr-4' => ['Bar' => 'app/'],
+                'psr-0' => ['Foo' => ['src/', 'lib/']],
+                'classmap' => ['Something.php'],
+                'files' => ['A.php', 'B.php'],
+            ],
+            'autoload-dev' => [
+                'psr-4' => ['Foo\\Tests' => 'tests/']
+            ],
+        ]));
+
+        $expected = [
+            'basePath/app/',
+            'basePath/tests/',
+            'basePath/src/',
+            'basePath/lib/',
+            'basePath/Something.php',
+            'basePath/A.php',
+            'basePath/B.php',
+        ];
+
+        $this->assertSame($expected, $content->getFileAndDirsToSearch());
     }
 }

@@ -20,7 +20,7 @@ class ComposerContent
         $this->realDirPath = $realDirPath;
     }
 
-    public function getClassmapDirs()
+    public function getClassmapValues()
     {
         return $this->concatWithRealPath(
             (array)$this->content->autoload->classmap,
@@ -28,12 +28,17 @@ class ComposerContent
         );
     }
 
-    public function getFiles()
+    public function getFilesValues()
     {
         return $this->concatWithRealPath(
             (array)$this->content->autoload->files,
             (array)$this->content->autoload_dev->files
         );
+    }
+
+    public function getIncludePathDirs()
+    {
+        return $this->concatWithRealPath((array)$this->content->include_path);
     }
 
     public function getPsr0Dirs()
@@ -55,7 +60,20 @@ class ComposerContent
         );
     }
 
-    private function concatWithRealPath(array $autoload, array $autoloadDev)
+    public function getFileAndDirsToSearch()
+    {
+        $paths = array_merge(
+            $this->getPsr4Dirs(),
+            $this->getPsr0Dirs(),
+            $this->getClassmapValues(),
+            $this->getFilesValues(),
+            $this->getIncludePathDirs()
+        );
+
+        return array_unique($paths);
+    }
+
+    private function concatWithRealPath(array $autoload, array $autoloadDev = [])
     {
         $dirs = array_merge(
             $this->flatternValues($autoload),
@@ -94,7 +112,7 @@ class ComposerContent
     public static function instantiate($fileName)
     {
         $raw = json_decode(file_get_contents($fileName, true));
-        if (null === $raw) {
+        if ($raw === null) {
             throw new \RuntimeException('failed to parse composer.json: ' . $fileName);
         }
         $realDirPath = dirname(realpath($fileName));

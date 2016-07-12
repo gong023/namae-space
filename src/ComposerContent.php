@@ -36,6 +36,17 @@ class ComposerContent
         );
     }
 
+    public function getPsr0Dirs()
+    {
+        // TODO: treat UniqueGlobalClass
+        $dirs = $this->concatWithRealPath(
+            (array)$this->content->autoload->psr_0,
+            (array)$this->content->autoload_dev->psr_0
+        );
+
+        return array_unique($dirs);
+    }
+
     public function getPsr4Dirs()
     {
         return $this->concatWithRealPath(

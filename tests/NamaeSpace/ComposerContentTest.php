@@ -5,6 +5,70 @@ namespace NamaeSpace;
 class ComposerContentTest extends \PHPUnit_Framework_TestCase
 {
     /**
+     * @dataProvider psr0Provider
+     * @param $autoload
+     * @param $expected
+     */
+    public function testPsr0Dirs($autoload, $expected)
+    {
+        $content = new ComposerContent('basePath', new NullableArray($autoload));
+
+        $this->assertSame($expected, $content->getPsr0Dirs());
+    }
+
+    public static function psr0Provider()
+    {
+        return [
+            'plain' => [
+                [
+                    'autoload' => [
+                        'psr-0' => ['Foo' => 'src/', 'Bar' => 'app/']
+                    ],
+                    'autoload_dev' => [
+                        'psr-0' => ['Foo\\Tests' => 'tests/']
+                    ],
+                ],
+                [
+                    'basePath/src/', 'basePath/app/', 'basePath/tests/',
+                ]
+            ],
+            'without_autoload_dev' => [
+                [
+                    'autoload' => [
+                        'psr-0' => ['Foo' => 'src/', 'Bar' => 'app/']
+                    ],
+                ],
+                [
+                    'basePath/src/', 'basePath/app/',
+                ]
+            ],
+            'multiple_dirs' => [
+                [
+                    'autoload' => [
+                        'psr-0' => [ 'Foo' => ['src/', 'lib/'] ]
+                    ],
+                ],
+                [
+                    'basePath/src/', 'basePath/lib/',
+                ]
+            ],
+            'duplicate_dirs' => [
+                [
+                    'autoload' => [
+                        'psr-0' => [ 'A\\' => 'src/', 'B\\C\\' => 'src/', 'B_C_' => 'src/' ]
+                    ],
+                ],
+                [
+                    'basePath/src/'
+                ]
+            ],
+            'undefined' => [
+                [], [],
+            ]
+        ];
+    }
+
+    /**
      * @dataProvider psr4Provider
      * @param $autoload
      * @param $expected

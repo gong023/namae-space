@@ -265,4 +265,96 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
 
         $this->assertSame($expected, $content->getFileAndDirsToSearch());
     }
+
+    /**
+     * @dataProvider replaceDirProvider
+     * @param $replacedName
+     * @param $content
+     * @param $expected
+     */
+    public function testGetDirsToReplace($replacedName, $content, $expected)
+    {
+        $content = new ComposerContent('basePath', new NullableArray($content));
+        $dirs = $content->getDirsToReplace($replacedName);
+
+        $this->assertSame($expected, $dirs);
+    }
+
+    public static function replaceDirProvider()
+    {
+        return [
+            'plain' => [
+                'A\\B',
+                [
+                    'autoload' => [
+                        'psr-4' => [
+                            'A\\'  => 'src/',
+                        ],
+                    ],
+                ],
+                [
+                    'src/',
+                ]
+            ],
+            'hasLongerKey' => [
+                'A\\B\\C\\',
+                [
+                    'autoload' => [
+                        'psr-4' => [
+                            'A\\B\\' => 'app/',
+                            'A\\'  => 'src/',
+                        ],
+                    ],
+                    'autoload-dev' => [
+                        'psr-4' => [
+                            'A\\B\\' => 'tests/',
+                        ]
+                    ],
+                ],
+                [
+                    'app/', 'tests/'
+                ]
+            ],
+            'hasMultipleDir' => [
+                'A\\B',
+                [
+                    'autoload' => [
+                        'psr-4' => [
+                            'A\\'  => ['src/', 'lib/'],
+                        ],
+                    ],
+                ],
+                [
+                    'src/', 'lib/',
+                ]
+            ],
+            'underscoreSplit' => [
+                'A\\B\\C\\',
+                [
+                    'autoload' => [
+                        'psr-0' => [
+                            'A_B_'  => 'src/',
+                        ],
+                    ],
+                ],
+                [
+                    'src/',
+                ]
+            ],
+            'notFound' => [
+                'X\\Y\\',
+                [
+                    'autoload' => [
+                        'psr-4' => [
+                            'A\\'  => 'src/',
+                        ],
+                    ],
+                ],
+                []
+            ],
+            'undefined' => [
+                '', [], []
+            ]
+        ];
+    }
 }

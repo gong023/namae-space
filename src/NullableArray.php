@@ -7,8 +7,8 @@ class NullableArray
     public function __construct(array $origin)
     {
         foreach ($origin as $key => $value) {
+            $key = str_replace(['-', '\\'], '_', $key);
             if (is_array($value)) {
-                $key = str_replace('-', '_', $key);
                 $this->{$key} = new static($value);
                 continue;
             }

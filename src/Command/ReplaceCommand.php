@@ -28,6 +28,21 @@ class ReplaceCommand extends Command
      */
     private $traverser;
 
+    /**
+     * @var ComposerContent
+     */
+    private $composerContent;
+
+    /**
+     * @var Name
+     */
+    private $targetNameSpace;
+
+    /**
+     * @var Name
+     */
+    private $newNameSpace;
+
     protected function configure()
     {
         $this
@@ -37,6 +52,7 @@ class ReplaceCommand extends Command
             ->addOption('additional_path', 'A', InputOption::VALUE_OPTIONAL)
             ->addOption('target_namespace', 'T', InputOption::VALUE_OPTIONAL)
             ->addOption('new_namespace', 'N', InputOption::VALUE_OPTIONAL)
+            ->addOption('replace_dir', 'R', InputOption::VALUE_OPTIONAL)
             ->addOption('dry_run', 'D', InputOption::VALUE_OPTIONAL)
             ->addOption('help', 'H', InputOption::VALUE_OPTIONAL);
     }
@@ -70,20 +86,28 @@ class ReplaceCommand extends Command
             $targetNameSpace = $helper->ask($input, $output, new Question('target name space: '));
             $input->setOption('target_namespace', $targetNameSpace);
         }
+        $this->targetNameSpace = new Name($input->getOption('target_namespace'));
 
         if (! $input->getOption('new_namespace')) {
             $newNameSpace = $helper->ask($input, $output, new Question('new name space: '));
             $input->setOption('new_namespace', $newNameSpace);
         }
+        $this->newNameSpace = new Name($input->getOption('new_namespace'));
+
+        $this->composerContent = ComposerContent::instantiate($input->getOption('composer_json'));
+
+        if (! $input->getOption('replace_dir')) {
+            $replaceDirs = $this->composerContent->getDirsToReplace($this->newNameSpace->getFirst());
+            if (count($replaceDirs) === 1) {
+                $input->setOption('replace_dir', $replaceDirs[0]);
+            } else {
+                // ask
+            }
+        }
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $targetNameSpace = new Name($input->getOption('target_namespace'));
-        $newNameSpace = new Name($input->getOption('new_namespace'));
-        $this->traverser->addVisitor(new ReplaceVisitor($newNameSpace));
-
-        $composerContent = ComposerContent::instantiate($input->getOption('composer_json'));
-
+        $this->traverser->addVisitor(new ReplaceVisitor($this->newNameSpace));
     }
 }

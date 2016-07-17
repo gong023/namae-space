@@ -23,8 +23,8 @@ class MutableString
 
     /**
      * @param int $pos
-     * @param $inserted
-     * @param $removed
+     * @param string $inserted
+     * @param string $removed
      * @return $this
      */
     public function addModification($pos, $removed, $inserted)

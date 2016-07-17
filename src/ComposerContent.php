@@ -20,6 +20,29 @@ class ComposerContent
         $this->realDirPath = $realDirPath;
     }
 
+    public function getDirsToReplace($nameSpace)
+    {
+        $nameSpace = explode('\\', $nameSpace);
+        $dirsToReplace = [];
+        $count = 0;
+        for ($i = 1; $i < count($nameSpace); $i++) {
+            $key = joinToString('_', $nameSpace, $i);
+            $r = array_merge(
+                (array)$this->content->autoload->psr_4->{$key},
+                (array)$this->content->autoload->psr_0->{$key},
+                (array)$this->content->autoload_dev->psr_4->{$key},
+                (array)$this->content->autoload_dev->psr_0->{$key}
+            );
+            $c = count($r);
+            if ($c >= $count) {
+                $dirsToReplace = $r;
+                $count = $c;
+            }
+        }
+
+        return array_values($dirsToReplace);
+    }
+
     public function getClassmapValues()
     {
         return $this->concatWithRealPath(
@@ -75,25 +98,11 @@ class ComposerContent
 
     private function concatWithRealPath(array $autoload, array $autoloadDev = [])
     {
-        $dirs = array_merge(
-            $this->flatternValues($autoload),
-            $this->flatternValues($autoloadDev)
-        );
+        $dirs = array_merge(arrayFlatten($autoload), arrayFlatten($autoloadDev));
 
         return array_map(function ($dir) {
             return $this->realDirPath . '/' . $dir;
         }, $dirs);
-    }
-
-    private function flatternValues(array $array)
-    {
-        $values = [];
-        $iterator = new \RecursiveIteratorIterator(new \RecursiveArrayIterator($array));
-        foreach ($iterator as $value) {
-            $values[] = $value;
-        }
-
-        return $values;
     }
 
     public static function validateExists($input)

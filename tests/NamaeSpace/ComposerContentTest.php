@@ -2,6 +2,8 @@
 
 namespace NamaeSpace;
 
+use PhpParser\Node\Name;
+
 class ComposerContentTest extends \PHPUnit_Framework_TestCase
 {
     /**
@@ -275,7 +277,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
     public function testGetDirsToReplace($replacedName, $content, $expected)
     {
         $content = new ComposerContent('basePath', new NullableArray($content));
-        $dirs = $content->getDirsToReplace($replacedName);
+        $dirs = $content->getDirsToReplace(new Name($replacedName));
 
         $this->assertSame($expected, $dirs);
     }
@@ -296,8 +298,22 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
                     'src/',
                 ]
             ],
-            'hasLongerKey' => [
-                'A\\B\\C\\',
+            'longName' => [
+                'A\\B\\C\\D\\E\\F',
+                [
+                    'autoload' => [
+                        'psr-4' => [
+                            'A\\'  => 'src/',
+                        ],
+                    ],
+                ],
+                [
+                    'src/B/C/D/E/',
+                ]
+
+            ],
+            'mappedLongKey' => [
+                'A\\B\\C',
                 [
                     'autoload' => [
                         'psr-4' => [
@@ -312,7 +328,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
                     ],
                 ],
                 [
-                    'app/', 'tests/'
+                    'app/B/', 'tests/B/'
                 ]
             ],
             'hasMultipleDir' => [
@@ -329,7 +345,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
                 ]
             ],
             'underscoreSplit' => [
-                'A\\B\\C\\',
+                'A\\B\\C',
                 [
                     'autoload' => [
                         'psr-0' => [
@@ -338,11 +354,11 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
                     ],
                 ],
                 [
-                    'src/',
+                    'src/B/',
                 ]
             ],
             'notFound' => [
-                'X\\Y\\',
+                'X\\Y',
                 [
                     'autoload' => [
                         'psr-4' => [

@@ -2,6 +2,8 @@
 
 namespace NamaeSpace;
 
+use PhpParser\Node\Name;
+
 class ComposerContent
 {
     /**
@@ -18,29 +20,6 @@ class ComposerContent
     {
         $this->content = $content;
         $this->realDirPath = $realDirPath;
-    }
-
-    public function getDirsToReplace($nameSpace)
-    {
-        $nameSpace = explode('\\', $nameSpace);
-        $dirsToReplace = [];
-        $count = 0;
-        for ($i = 1; $i < count($nameSpace); $i++) {
-            $key = joinToString('_', $nameSpace, $i);
-            $r = array_merge(
-                (array)$this->content->autoload->psr_4->{$key},
-                (array)$this->content->autoload->psr_0->{$key},
-                (array)$this->content->autoload_dev->psr_4->{$key},
-                (array)$this->content->autoload_dev->psr_0->{$key}
-            );
-            $c = count($r);
-            if ($c >= $count) {
-                $dirsToReplace = $r;
-                $count = $c;
-            }
-        }
-
-        return array_values($dirsToReplace);
     }
 
     public function getClassmapValues()
@@ -96,6 +75,34 @@ class ComposerContent
         return array_unique($paths);
     }
 
+    public function getDirsToReplace(Name $nameSpace)
+    {
+        $dirsToReplace = [];
+        $matchLength = 0;
+        for ($i = 1; $i < count($nameSpace->parts); $i++) {
+            $key = joinToString('_', $nameSpace->parts, $i);
+            $r = array_merge(
+                (array)$this->content->autoload->psr_4->{$key},
+                (array)$this->content->autoload->psr_0->{$key},
+                (array)$this->content->autoload_dev->psr_4->{$key},
+                (array)$this->content->autoload_dev->psr_0->{$key}
+            );
+            $c = count($r);
+            if ($c >= $matchLength) {
+                $dirsToReplace = array_map(function ($path) use ($nameSpace) {
+                    $parts = $nameSpace->parts;
+                    array_shift($parts);
+                    $path = preg_replace('/\/$/', '', $path);
+
+                    return $path . '/' . joinToString('/', $parts, count($parts) - 1);
+                }, $r);
+                $matchLength = $c;
+            }
+        }
+
+        return array_values($dirsToReplace);
+    }
+
     private function concatWithRealPath(array $autoload, array $autoloadDev = [])
     {
         $dirs = array_merge(arrayFlatten($autoload), arrayFlatten($autoloadDev));
@@ -112,7 +119,7 @@ class ComposerContent
         }
         $input = preg_replace('/\/$/', '', $input);
         if (file_exists("$input/composer.json")) {
-            return $input;
+            return "$input/composer.json";
         }
 
         throw new \RuntimeException("composer.json doesn't exist in $input");
@@ -120,7 +127,8 @@ class ComposerContent
     
     public static function instantiate($fileName)
     {
-        $raw = json_decode(file_get_contents($fileName, true));
+        // filename is not validated if filename is specified by -C
+        $raw = json_decode(file_get_contents(self::validateExists($fileName)), true);
         if ($raw === null) {
             throw new \RuntimeException('failed to parse composer.json: ' . $fileName);
         }

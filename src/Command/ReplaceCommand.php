@@ -14,6 +14,7 @@ use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Question\ChoiceQuestion;
 use Symfony\Component\Console\Question\Question;
 
 class ReplaceCommand extends Command
@@ -53,8 +54,7 @@ class ReplaceCommand extends Command
             ->addOption('target_namespace', 'T', InputOption::VALUE_OPTIONAL)
             ->addOption('new_namespace', 'N', InputOption::VALUE_OPTIONAL)
             ->addOption('replace_dir', 'R', InputOption::VALUE_OPTIONAL)
-            ->addOption('dry_run', 'D', InputOption::VALUE_OPTIONAL)
-            ->addOption('help', 'H', InputOption::VALUE_OPTIONAL);
+            ->addOption('dry_run', 'D', InputOption::VALUE_OPTIONAL);
     }
 
     protected function initialize(InputInterface $input, OutputInterface $output)
@@ -97,11 +97,18 @@ class ReplaceCommand extends Command
         $this->composerContent = ComposerContent::instantiate($input->getOption('composer_json'));
 
         if (! $input->getOption('replace_dir')) {
-            $replaceDirs = $this->composerContent->getDirsToReplace($this->newNameSpace->getFirst());
-            if (count($replaceDirs) === 1) {
+            $replaceDirs = $this->composerContent->getDirsToReplace($this->newNameSpace);
+            $dirsCount = count($replaceDirs);
+            if ($dirsCount === 0) {
+                throw new \RuntimeException('base dir is not found to put ' . $this->newNameSpace->getLast() . '.php');
+            } elseif ($dirsCount === 1) {
                 $input->setOption('replace_dir', $replaceDirs[0]);
             } else {
-                // ask
+                $question = new ChoiceQuestion(
+                    'which dir do you use to put ' . $this->newNameSpace->getLast() . '.php',
+                    $replaceDirs
+                );
+                $input->setOption('replace_dir', $helper->ask($input, $output, $question));
             }
         }
     }

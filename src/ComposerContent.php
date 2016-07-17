@@ -22,57 +22,9 @@ class ComposerContent
         $this->realDirPath = $realDirPath;
     }
 
-    public function getClassmapValues()
+    public function getReadDirPath()
     {
-        return $this->concatWithRealPath(
-            (array)$this->content->autoload->classmap,
-            (array)$this->content->autoload_dev->classmap
-        );
-    }
-
-    public function getFilesValues()
-    {
-        return $this->concatWithRealPath(
-            (array)$this->content->autoload->files,
-            (array)$this->content->autoload_dev->files
-        );
-    }
-
-    public function getIncludePathDirs()
-    {
-        return $this->concatWithRealPath((array)$this->content->include_path);
-    }
-
-    public function getPsr0Dirs()
-    {
-        // TODO: treat UniqueGlobalClass
-        $dirs = $this->concatWithRealPath(
-            (array)$this->content->autoload->psr_0,
-            (array)$this->content->autoload_dev->psr_0
-        );
-
-        return array_unique($dirs);
-    }
-
-    public function getPsr4Dirs()
-    {
-        return $this->concatWithRealPath(
-            (array)$this->content->autoload->psr_4,
-            (array)$this->content->autoload_dev->psr_4
-        );
-    }
-
-    public function getFileAndDirsToSearch()
-    {
-        $paths = array_merge(
-            $this->getPsr4Dirs(),
-            $this->getPsr0Dirs(),
-            $this->getClassmapValues(),
-            $this->getFilesValues(),
-            $this->getIncludePathDirs()
-        );
-
-        return array_unique($paths);
+        return $this->realDirPath;
     }
 
     public function getDirsToReplace(Name $nameSpace)
@@ -103,13 +55,54 @@ class ComposerContent
         return array_values($dirsToReplace);
     }
 
-    private function concatWithRealPath(array $autoload, array $autoloadDev = [])
+    public function getClassmapValues()
     {
-        $dirs = array_merge(arrayFlatten($autoload), arrayFlatten($autoloadDev));
+        return array_merge(
+            array_values((array)$this->content->autoload->classmap),
+            array_values((array)$this->content->autoload_dev->classmap)
+        );
+    }
 
-        return array_map(function ($dir) {
-            return $this->realDirPath . '/' . $dir;
-        }, $dirs);
+    public function getFilesValues()
+    {
+        return array_merge(
+            array_values((array)$this->content->autoload->files),
+            array_values((array)$this->content->autoload_dev->files)
+        );
+    }
+
+    public function getIncludePathDirs()
+    {
+        return array_values((array)$this->content->include_path);
+    }
+
+    public function getPsr0Dirs()
+    {
+        return array_merge(
+            arrayFlatten((array)$this->content->autoload->psr_0),
+            arrayFlatten((array)$this->content->autoload_dev->psr_0)
+        );
+    }
+
+    public function getPsr4Dirs()
+    {
+        return array_merge(
+            arrayFlatten((array)$this->content->autoload->psr_4),
+            arrayFlatten((array)$this->content->autoload_dev->psr_4)
+        );
+    }
+
+    public function getFileAndDirsToSearch()
+    {
+        $paths = array_merge(
+            $this->getPsr4Dirs(),
+            $this->getPsr0Dirs(),
+            $this->getClassmapValues(),
+            $this->getFilesValues(),
+            $this->getIncludePathDirs()
+        );
+
+        return array_unique($paths);
     }
 
     public static function validateExists($input)

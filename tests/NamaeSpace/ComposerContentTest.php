@@ -31,7 +31,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
                     ],
                 ],
                 [
-                    'basePath/src/', 'basePath/app/', 'basePath/tests/',
+                    'src/', 'app/', 'tests/',
                 ]
             ],
             'without_autoload_dev' => [
@@ -41,7 +41,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
                     ],
                 ],
                 [
-                    'basePath/src/', 'basePath/app/',
+                    'src/', 'app/',
                 ]
             ],
             'multiple_dirs' => [
@@ -51,17 +51,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
                     ],
                 ],
                 [
-                    'basePath/src/', 'basePath/lib/',
-                ]
-            ],
-            'duplicate_dirs' => [
-                [
-                    'autoload' => [
-                        'psr-0' => [ 'A\\' => 'src/', 'B\\C\\' => 'src/', 'B_C_' => 'src/' ]
-                    ],
-                ],
-                [
-                    'basePath/src/'
+                    'src/', 'lib/',
                 ]
             ],
             'undefined' => [
@@ -95,7 +85,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
                     ],
                 ],
                 [
-                    'basePath/src/', 'basePath/app/', 'basePath/tests/',
+                    'src/', 'app/', 'tests/',
                 ]
             ],
             'without_autoload_dev' => [
@@ -105,7 +95,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
                     ],
                 ],
                 [
-                    'basePath/src/', 'basePath/app/',
+                    'src/', 'app/',
                 ]
             ],
             'multiple_dirs' => [
@@ -115,7 +105,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
                     ],
                 ],
                 [
-                    'basePath/src/', 'basePath/lib/',
+                    'src/', 'lib/',
                 ]
             ],
             'undefined' => [
@@ -149,7 +139,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
                     ],
                 ],
                 [
-                    'basePath/src/', 'basePath/Something.php', 'basePath/C.php'
+                    'src/', 'Something.php', 'C.php'
                 ]
             ],
             'without_autoload_dev' => [
@@ -159,7 +149,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
                     ],
                 ],
                 [
-                    'basePath/src/', 'basePath/Something.php',
+                    'src/', 'Something.php',
                 ]
             ],
             'undefined' => [
@@ -193,7 +183,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
                     ],
                 ],
                 [
-                    'basePath/A.php', 'basePath/B.php', 'basePath/C.php'
+                    'A.php', 'B.php', 'C.php'
                 ]
             ],
             'without_autoload_dev' => [
@@ -203,7 +193,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
                     ],
                 ],
                 [
-                    'basePath/A.php', 'basePath/B.php',
+                    'A.php', 'B.php',
                 ]
             ],
             'undefined' => [
@@ -232,7 +222,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
                     'include-path' => ['lib/', 'src/'],
                 ],
                 [
-                    'basePath/lib/', 'basePath/src/',
+                    'lib/', 'src/',
                 ]
             ],
             'undefined' => [
@@ -246,7 +236,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
         $content = new ComposerContent('basePath', new NullableArray([
             'autoload' => [
                 'psr-4' => ['Bar' => 'app/'],
-                'psr-0' => ['Foo' => ['src/', 'lib/']],
+                'psr-0' => [ 'A\\' => 'src/', 'B\\C\\' => 'src/', 'B_C_' => 'src/' ], // duplicate dir
                 'classmap' => ['Something.php'],
                 'files' => ['A.php', 'B.php'],
             ],
@@ -256,16 +246,15 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
         ]));
 
         $expected = [
-            'basePath/app/',
-            'basePath/tests/',
-            'basePath/src/',
-            'basePath/lib/',
-            'basePath/Something.php',
-            'basePath/A.php',
-            'basePath/B.php',
+            'app/',
+            'tests/',
+            'src/',
+            'Something.php',
+            'A.php',
+            'B.php',
         ];
 
-        $this->assertSame($expected, $content->getFileAndDirsToSearch());
+        $this->assertSame($expected, array_values($content->getFileAndDirsToSearch()));
     }
 
     /**

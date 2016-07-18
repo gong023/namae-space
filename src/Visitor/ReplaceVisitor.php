@@ -2,6 +2,7 @@
 
 namespace NamaeSpace\Visitor;
 
+use NamaeSpace\MutableString;
 use PhpParser\Node;
 use PhpParser\Node\Name;
 use PhpParser\NodeVisitorAbstract;
@@ -9,25 +10,45 @@ use PhpParser\Node\Stmt;
 
 class ReplaceVisitor extends NodeVisitorAbstract
 {
-    public static $findLines = [];
+    /**
+     * @var Name
+     */
+    private $targetName;
 
-    private $beforeNameSpace;
+    /**
+     * @var Name
+     */
+    private $newName;
 
-    public function __construct(Name $beforeNameSpace)
+    /**
+     * @var MutableString
+     */
+    private $code;
+
+    public function __construct(Name $targetName, Name $newName)
     {
-        $this->beforeNameSpace = $beforeNameSpace;
+        $this->targetName = $targetName;
+        $this->newName = $newName;
+    }
+
+    public function setCode(MutableString $code)
+    {
+        $this->code = $code;
+
+        return $this;
     }
 
     public function leaveNode(Node $node)
     {
-        if ($node instanceof Name && $node->toString() === $this->beforeNameSpace->toString()) {
-            self::$findLines['names'][] = $node->getAttributes();
-        } elseif ($node instanceof Stmt\Namespace_) {
-            self::$findLines['namespace'] = $node->getAttributes('startFilePos');
+        // TODO: if node name is not only last
+        if ($node instanceof Name && $node->toString() === $this->targetName->getLast()) {
+            echo 'a';
+            $this->code->addModification(
+                $node->getAttribute('startFilePos'),
+                $node->toString(),
+                $this->newName->getLast()
+            );
         } elseif ($node instanceof Stmt\Class_) {
-            self::$findLines['classes'][] = $node->getAttributes('startFilePos');
-        } elseif ($node instanceof Stmt\Use_) {
-            self::$findLines['uses'][] = $node->getAttributes('startFilePos');
         }
 
         return null;

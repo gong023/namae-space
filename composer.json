@@ -20,7 +20,7 @@
         "psr-4": {
             "NamaeSpace\\": "src"
         },
-        "files": ["src/functions.php"]
+        "files": ["src/finder.php"]
     },
     "autoload-dev": {
         "psr-4": {

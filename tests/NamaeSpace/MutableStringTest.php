@@ -6,7 +6,7 @@ class MutableStringTest extends \PHPUnit_Framework_TestCase
 {
     public function testModify()
     {
-        $before = <<<CODE
+        $origin = <<<CODE
 use A\B;
 
 class A
@@ -17,7 +17,7 @@ class A
     }
 }
 CODE;
-        $expected = <<<CODE
+        $modified = <<<CODE
 use A\XX;
 
 class A
@@ -28,11 +28,11 @@ class A
     }
 }
 CODE;
-        $mutableString = new MutableString($before);
+        $mutableString = new MutableString($origin);
         $mutableString->addModification(6, 'B', 'XX');
         $mutableString->addModification(52, 'B', 'XX');
 
-        $this->assertSame($expected, $mutableString->getModified());
-        $this->assertSame($before, $mutableString->getOrigin());
+        $this->assertSame($modified, $mutableString->getModified());
+        $this->assertSame($origin, $mutableString->getOrigin());
     }
 }

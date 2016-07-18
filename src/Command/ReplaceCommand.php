@@ -3,12 +3,14 @@
 namespace NamaeSpace\Command;
 
 use NamaeSpace\ComposerContent;
+use NamaeSpace\MutableString;
 use NamaeSpace\Visitor\ReplaceVisitor;
 use PhpParser\Lexer;
 use PhpParser\Node\Name;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\ParserFactory;
+use SebastianBergmann\Diff\Differ;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
@@ -19,16 +21,6 @@ use Symfony\Component\Console\Question\Question;
 
 class ReplaceCommand extends Command
 {
-    /**
-     * @var \PHPParser\Parser\Php5
-     */
-    private $parser;
-
-    /**
-     * @var NodeTraverser
-     */
-    private $traverser;
-
     /**
      * @var ComposerContent
      */
@@ -54,17 +46,7 @@ class ReplaceCommand extends Command
             ->addOption('target_namespace', 'T', InputOption::VALUE_OPTIONAL)
             ->addOption('new_namespace', 'N', InputOption::VALUE_OPTIONAL)
             ->addOption('replace_dir', 'R', InputOption::VALUE_OPTIONAL)
-            ->addOption('dry_run', 'D', InputOption::VALUE_OPTIONAL);
-    }
-
-    protected function initialize(InputInterface $input, OutputInterface $output)
-    {
-        $lexer = new Lexer(['usedAttributes' => [
-            'startLine', 'startFilePos', 'endFilePos'
-        ]]);
-        $this->parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP5, $lexer);
-        $this->traverser = new NodeTraverSer();
-        $this->traverser->addVisitor(new NameResolver());
+            ->addOption('dry_run', 'D', InputOption::VALUE_NONE);
     }
 
     protected function interact(InputInterface $input, OutputInterface $output)
@@ -115,6 +97,37 @@ class ReplaceCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->traverser->addVisitor(new ReplaceVisitor($this->newNameSpace));
+        $lexer = new Lexer(['usedAttributes' => ['startFilePos']]);
+        $parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP5, $lexer);
+        $traverser = new NodeTraverSer();
+        $traverser->addVisitor(new NameResolver());
+        $visitor = new ReplaceVisitor($this->targetNameSpace, $this->newNameSpace);
+        $traverser->addVisitor($visitor);
+        $differ = new Differ();
+
+        $search = array_merge(
+            $this->composerContent->getFileAndDirsToSearch(),
+            (array)$input->getOption('additional_path')
+        );
+
+        \NamaeSpace\applyToEachFile(
+            $this->composerContent->getReadDirPath(),
+            $search,
+            function (\SplFileInfo $fileInfo) use ($visitor, $traverser, $parser, $differ, $input, $output) {
+                $rawCode = file_get_contents($fileInfo->getRealPath());
+                $code = new MutableString($rawCode);
+                $visitor->setCode($code);
+                $stmts = $parser->parse($rawCode);
+                $traverser->traverse($stmts);
+                $replacedCode = $code->getModified();
+
+                if ($input->getOption('dry_run')) {
+                    if ($code->getOrigin() !== $replacedCode) {
+                        $output->writeln($differ->diff($code->getOrigin(), $replacedCode));
+                    }
+                    return;
+                }
+            }
+        );
     }
 }

@@ -103,7 +103,7 @@ class ReplaceCommand extends Command
         $traverser->addVisitor(new NameResolver());
         $visitor = new ReplaceVisitor($this->targetNameSpace, $this->newNameSpace);
         $traverser->addVisitor($visitor);
-        $differ = new Differ();
+        $differ = new Differ("--- Original\n+++ New\n", false);
 
         $search = array_merge(
             $this->composerContent->getFileAndDirsToSearch(),
@@ -113,7 +113,7 @@ class ReplaceCommand extends Command
         \NamaeSpace\applyToEachFile(
             $this->composerContent->getReadDirPath(),
             $search,
-            function (\SplFileInfo $fileInfo) use ($visitor, $traverser, $parser, $differ, $input, $output) {
+            function ($basePath, \SplFileInfo $fileInfo) use ($visitor, $traverser, $parser, $differ, $input, $output) {
                 $rawCode = file_get_contents($fileInfo->getRealPath());
                 $code = new MutableString($rawCode);
                 $visitor->setCode($code);
@@ -123,9 +123,21 @@ class ReplaceCommand extends Command
 
                 if ($input->getOption('dry_run')) {
                     if ($code->getOrigin() !== $replacedCode) {
+                        $output->writeln('<info>' . $fileInfo->getFilename() . '</info>');
                         $output->writeln($differ->diff($code->getOrigin(), $replacedCode));
                     }
                     return;
+                } else {
+                    if (ReplaceVisitor::$targetClass) {
+                        $outputFilePath = "$basePath/{$input->getOption('replace_dir')}/{$visitor->getNewName()->getLast()}.php";
+                        @mkdir("$basePath/{$input->getOption('replace_dir')}", 0777, true);
+                        file_put_contents($outputFilePath, $code->getModified());
+                        @unlink($fileInfo->getRealPath());
+                        @rmdir($fileInfo->getPath());
+                        ReplaceVisitor::$targetClass = false;
+                    } else {
+                        file_put_contents($fileInfo->getRealPath(), $replacedCode);
+                    }
                 }
             }
         );

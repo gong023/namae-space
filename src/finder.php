@@ -11,7 +11,7 @@ function applyToEachFile($basePath, array $targetPaths, callable $proc)
     foreach ($targetPaths as $targetPath) {
         $targetPath = $basePath . '/' . $targetPath;
         if (is_file($targetPath)) {
-            $proc(new SplFileInfo($targetPath));
+            $proc($basePath, new SplFileInfo($targetPath));
             continue;
         }
         $it = new RecursiveIteratorIterator(
@@ -21,7 +21,7 @@ function applyToEachFile($basePath, array $targetPaths, callable $proc)
         /** @var SplFileInfo $file */
         foreach ($it as $file) {
             if ($file->isFile() || strpos($file->getPathname(), '.php')) {
-                $proc($file);
+                $proc($basePath, $file);
             }
         }
     }

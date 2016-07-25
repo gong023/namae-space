@@ -10,6 +10,8 @@ use PhpParser\Node\Stmt;
 
 class ReplaceVisitor extends NodeVisitorAbstract
 {
+    public static $targetClass = false;
+
     /**
      * @var Name
      */
@@ -38,18 +40,36 @@ class ReplaceVisitor extends NodeVisitorAbstract
         return $this;
     }
 
+    public function getNewName()
+    {
+        return $this->newName;
+    }
+
     public function leaveNode(Node $node)
     {
-        // TODO: if node name is not only last
-        if ($node instanceof Name && $node->toString() === $this->targetName->getLast()) {
-            echo 'a';
+        if ($node instanceof Stmt\ClassLike
+            && $node->name === $this->targetName->getLast()) {
+
             $this->code->addModification(
                 $node->getAttribute('startFilePos'),
-                $node->toString(),
-                $this->newName->getLast()
+                'class ' . $node->name,
+                'class ' . $this->newName->getLast()
             );
-        } elseif ($node instanceof Stmt\Class_) {
+            static::$targetClass = true;
+
+            // do not return to keep modifiy
         }
+
+//        if ($node instanceof Name
+//            && $node->toString() === $this->targetName->toString()
+//        ) {
+//            $this->code->addModification(
+//                $node->getAttribute('startFilePos'),
+//                $node->toString(),
+//                $this->newName->getLast()
+//            );
+//        } elseif ($node instanceof Stmt\Class_) {
+//        }
 
         return null;
     }

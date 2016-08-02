@@ -7,6 +7,7 @@ use PhpParser\Node;
 use PhpParser\Node\Name;
 use PhpParser\NodeVisitorAbstract;
 use PhpParser\Node\Stmt;
+use PhpParser\Node\Expr;
 
 class ReplaceVisitor extends NodeVisitorAbstract
 {
@@ -48,7 +49,8 @@ class ReplaceVisitor extends NodeVisitorAbstract
     public function leaveNode(Node $node)
     {
         if ($node instanceof Stmt\ClassLike
-            && $node->name === $this->targetName->getLast()) {
+            && $node->name === $this->targetName->getLast()
+        ) {
 
             $this->code->addModification(
                 $node->getAttribute('startFilePos'),
@@ -60,16 +62,16 @@ class ReplaceVisitor extends NodeVisitorAbstract
             // do not return to keep modifiy
         }
 
-//        if ($node instanceof Name
-//            && $node->toString() === $this->targetName->toString()
-//        ) {
-//            $this->code->addModification(
-//                $node->getAttribute('startFilePos'),
-//                $node->toString(),
-//                $this->newName->getLast()
-//            );
-//        } elseif ($node instanceof Stmt\Class_) {
-//        }
+        if ($node instanceof Expr\New_
+            && $node->class instanceof Name
+            && $node->class->getLast() === $this->targetName->getLast()
+        ) {
+            $this->code->addModification(
+                $node->getAttribute('startFilePos'),
+                'new ' . $node->class->getLast(),
+                'new ' . $this->newName->getLast()
+            );
+        }
 
         return null;
     }

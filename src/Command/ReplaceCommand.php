@@ -3,13 +3,10 @@
 namespace NamaeSpace\Command;
 
 use NamaeSpace\ComposerContent;
-use NamaeSpace\MutableString;
+use NamaeSpace\ReplaceProc;
 use NamaeSpace\Visitor\ReplaceVisitor;
 use PhpParser\Lexer;
 use PhpParser\Node\Name;
-use PhpParser\NodeTraverser;
-use PhpParser\NodeVisitor\NameResolver;
-use PhpParser\ParserFactory;
 use SebastianBergmann\Diff\Differ;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
@@ -97,12 +94,7 @@ class ReplaceCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $lexer = new Lexer(['usedAttributes' => ['startFilePos']]);
-        $parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP5, $lexer);
-        $traverser = new NodeTraverSer();
-        $traverser->addVisitor(new NameResolver());
-        $visitor = new ReplaceVisitor($this->targetNameSpace, $this->newNameSpace);
-        $traverser->addVisitor($visitor);
+        $replacer = ReplaceProc::create($this->targetNameSpace, $this->newNameSpace);
         $differ = new Differ("--- Original\n+++ New\n", false);
 
         $search = array_merge(
@@ -113,12 +105,8 @@ class ReplaceCommand extends Command
         \NamaeSpace\applyToEachFile(
             $this->composerContent->getReadDirPath(),
             $search,
-            function ($basePath, \SplFileInfo $fileInfo) use ($visitor, $traverser, $parser, $differ, $input, $output) {
-                $rawCode = file_get_contents($fileInfo->getRealPath());
-                $code = new MutableString($rawCode);
-                $visitor->setCode($code);
-                $stmts = $parser->parse($rawCode);
-                $traverser->traverse($stmts);
+            function ($basePath, \SplFileInfo $fileInfo) use ($replacer, $differ, $input, $output) {
+                $code = $replacer->replace($fileInfo->getRealPath());
                 $replacedCode = $code->getModified();
 
                 if ($input->getOption('dry_run')) {
@@ -127,17 +115,17 @@ class ReplaceCommand extends Command
                         $output->writeln($differ->diff($code->getOrigin(), $replacedCode));
                     }
                     return;
+                }
+
+                if (ReplaceVisitor::$targetClass) {
+                    ReplaceVisitor::$targetClass = false;
+                    $outputFilePath = "$basePath/{$input->getOption('replace_dir')}/{$this->targetNameSpace->getLast()}.php";
+                    @mkdir("$basePath/{$input->getOption('replace_dir')}", 0777, true);
+                    file_put_contents($outputFilePath, $replacedCode);
+                    @unlink($fileInfo->getRealPath());
+                    @rmdir($fileInfo->getPath());
                 } else {
-                    if (ReplaceVisitor::$targetClass) {
-                        $outputFilePath = "$basePath/{$input->getOption('replace_dir')}/{$visitor->getNewName()->getLast()}.php";
-                        @mkdir("$basePath/{$input->getOption('replace_dir')}", 0777, true);
-                        file_put_contents($outputFilePath, $code->getModified());
-                        @unlink($fileInfo->getRealPath());
-                        @rmdir($fileInfo->getPath());
-                        ReplaceVisitor::$targetClass = false;
-                    } else {
-                        file_put_contents($fileInfo->getRealPath(), $replacedCode);
-                    }
+                    file_put_contents($fileInfo->getRealPath(), $replacedCode);
                 }
             }
         );

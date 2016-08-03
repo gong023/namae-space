@@ -37,9 +37,8 @@ class ReplaceProc
         $this->visitor = $visitor;
     }
 
-    public function replace($filePath)
+    public function replace($rawCode)
     {
-        $rawCode = file_get_contents($filePath);
         // TODO:fix MutableString not to instantiate here
         $code = new MutableString($rawCode);
         $this->visitor->setCode($code);

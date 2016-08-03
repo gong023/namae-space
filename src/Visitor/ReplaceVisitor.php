@@ -41,11 +41,6 @@ class ReplaceVisitor extends NodeVisitorAbstract
         return $this;
     }
 
-    public function getNewName()
-    {
-        return $this->newName;
-    }
-
     public function leaveNode(Node $node)
     {
         if ($node instanceof Stmt\ClassLike
@@ -62,15 +57,22 @@ class ReplaceVisitor extends NodeVisitorAbstract
             // do not return to keep modifiy
         }
 
-        if ($node instanceof Expr\New_
-            && $node->class instanceof Name
-            && $node->class->getLast() === $this->targetName->getLast()
-        ) {
-            $this->code->addModification(
-                $node->getAttribute('startFilePos'),
-                'new ' . $node->class->getLast(),
-                'new ' . $this->newName->getLast()
-            );
+        if ($node instanceof Expr\New_ && $node->class instanceof Name) {
+            if ($node->class->isFullyQualified()
+                && $node->class->toString() === $this->targetName->toString()
+            ) {
+                $this->code->addModification(
+                    $node->getAttribute('startFilePos'),
+                    'new ' . $node->class->toString(),
+                    'new ' . $this->newName->toString()
+                );
+            } elseif ($node->class->getLast() === $this->targetName->getLast()) {
+                $this->code->addModification(
+                    $node->getAttribute('startFilePos'),
+                    'new ' . $node->class->getLast(),
+                    'new ' . $this->newName->getLast()
+                );
+            }
         }
 
         return null;

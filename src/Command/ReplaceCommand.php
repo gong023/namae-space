@@ -106,7 +106,7 @@ class ReplaceCommand extends Command
             $this->composerContent->getReadDirPath(),
             $search,
             function ($basePath, \SplFileInfo $fileInfo) use ($replacer, $differ, $input, $output) {
-                $code = $replacer->replace($fileInfo->getRealPath());
+                $code = $replacer->replace(file_get_contents($fileInfo->getRealPath()));
                 $replacedCode = $code->getModified();
 
                 if ($input->getOption('dry_run')) {

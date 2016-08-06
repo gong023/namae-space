@@ -13,6 +13,11 @@ use PhpParser\ParserFactory;
 class ReplaceProc
 {
     /**
+     * @var ReplaceVisitor
+     */
+    private $replaceVisitor;
+
+    /**
      * @var Parser
      */
     private $parser;
@@ -22,26 +27,21 @@ class ReplaceProc
      */
     private $traverser;
 
-    /**
-     * @var ReplaceVisitor
-     */
-    private $visitor;
-
     public function __construct(
         Parser $parser,
         NodeTraverser $traverser,
-        ReplaceVisitor $visitor
+        ReplaceVisitor $replaceVisitor
     ) {
         $this->parser = $parser;
         $this->traverser = $traverser;
-        $this->visitor = $visitor;
+        $this->replaceVisitor = $replaceVisitor;
     }
 
     public function replace($rawCode)
     {
         // TODO:fix MutableString not to instantiate here
         $code = new MutableString($rawCode);
-        $this->visitor->setCode($code);
+        $this->replaceVisitor->setCode($code);
         $stmts = $this->parser->parse($rawCode);
         $this->traverser->traverse($stmts);
 
@@ -53,7 +53,7 @@ class ReplaceProc
         // TODO: move to the other file except adding ReplaceVisitor
         $lexer = new Lexer(['usedAttributes' => ['startFilePos']]);
         $parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP5, $lexer);
-        $traverser = new NodeTraverSer();
+        $traverser = new NodeTraverser();
         $traverser->addVisitor(new NameResolver());
         $visitor = new ReplaceVisitor($originName, $newName);
         $traverser->addVisitor($visitor);

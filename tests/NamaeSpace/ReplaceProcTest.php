@@ -7,21 +7,33 @@ use PhpParser\Node\Name;
 class ReplaceProcTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @var ReplaceProc
+     * @dataProvider fixtureProvider
+     * @param $file
+     * @param $originName
+     * @param $newName
      */
-    private static $replaceProc;
-
-    public static function setUpBeforeClass()
+    public function testReplaceByFixture($file, $originName, $newName)
     {
-        $originName = new Name('Origin');
-        $newName = new Name('Replaced');
-        self::$replaceProc = ReplaceProc::create($originName, $newName);
+        list($expected, $target) = loadFixture($file);
+        $replaceProc = ReplaceProc::create(new Name($originName), new Name($newName));
+        $code = $replaceProc->replace($target);
+
+        $this->assertSame($target, $code->getOrigin(), $file);
+        $this->assertSame($expected, $code->getModified(), $file);
     }
 
-    public function testExprNew()
+    public static function fixtureProvider()
     {
-        list($expected, $target) = loadFixture('ExprNew');
-        $code = self::$replaceProc->replace($target);
+        return [
+            ['ExprNew', 'Origin', 'Replaced'],
+        ];
+    }
+
+    public function testReplaceFullyQualified()
+    {
+        list($expected, $target) = loadFixture('ExprNewFullyQuallyfied');
+        $replaceProc = ReplaceProc::create(new Name('Test\\A\\Origin'), new Name('Test\\B\\Replaced'));
+        $code = $replaceProc->replace($target);
 
         $this->assertSame($target, $code->getOrigin());
         $this->assertSame($expected, $code->getModified());

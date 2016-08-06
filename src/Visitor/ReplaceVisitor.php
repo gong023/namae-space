@@ -46,7 +46,6 @@ class ReplaceVisitor extends NodeVisitorAbstract
         if ($node instanceof Stmt\ClassLike
             && $node->name === $this->targetName->getLast()
         ) {
-
             $this->code->addModification(
                 $node->getAttribute('startFilePos'),
                 'class ' . $node->name,
@@ -57,22 +56,19 @@ class ReplaceVisitor extends NodeVisitorAbstract
             // do not return to keep modifiy
         }
 
-        if ($node instanceof Expr\New_ && $node->class instanceof Name) {
-            if ($node->class->isFullyQualified()
-                && $node->class->toString() === $this->targetName->toString()
-            ) {
-                $this->code->addModification(
-                    $node->getAttribute('startFilePos'),
-                    'new ' . $node->class->toString(),
-                    'new ' . $this->newName->toString()
-                );
-            } elseif ($node->class->getLast() === $this->targetName->getLast()) {
-                $this->code->addModification(
-                    $node->getAttribute('startFilePos'),
-                    'new ' . $node->class->getLast(),
-                    'new ' . $this->newName->getLast()
-                );
+        if ($node instanceof Expr\New_
+            && $node->class instanceof Name\FullyQualified
+            && $node->class->toString() === $this->targetName->toString()
+        ) {
+            if (count($node->class->parts) > 1) {
+                // NameResolver doesn't append first backslash and MutableString position shifts to one right
+                $removed = 'new \\' . $node->class->toString();
+                $inserted = 'new \\' . $this->newName->toString();
+            } else {
+                $removed = 'new ' . $node->class->toString();
+                $inserted = 'new ' . $this->newName->toString();
             }
+            $this->code->addModification($node->getAttribute('startFilePos'), $removed, $inserted);
         }
 
         return null;

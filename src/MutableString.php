@@ -46,8 +46,7 @@ class MutableString
 
         $result = '';
         $startPos = 0;
-        foreach ($this->modifications as $modification) {
-            list($pos, $removed, $inserted) = $modification;
+        foreach ($this->modifications as list($pos, $removed, $inserted)) {
             $result .= substr($this->string, $startPos, $pos - $startPos);
             $result .= $inserted;
             $startPos = $pos + strlen($removed);

@@ -65,13 +65,15 @@ class ReplaceCommand extends Command
             $targetNameSpace = $helper->ask($input, $output, new Question('target name space: '));
             $input->setOption('target_namespace', $targetNameSpace);
         }
-        $this->targetNameSpace = new Name($input->getOption('target_namespace'));
+        $targetName = preg_replace('^\\', '', $input->getOption('target_namespace'));
+        $this->targetNameSpace = new Name($targetName);
 
         if (! $input->getOption('new_namespace')) {
             $newNameSpace = $helper->ask($input, $output, new Question('new name space: '));
             $input->setOption('new_namespace', $newNameSpace);
         }
-        $this->newNameSpace = new Name($input->getOption('new_namespace'));
+        $newName = preg_replace('^\\', '', $input->getOption('new_namespace'));
+        $this->newNameSpace = new Name($newName);
 
         $this->composerContent = ComposerContent::instantiate($input->getOption('composer_json'));
 

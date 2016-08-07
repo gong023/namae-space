@@ -51,11 +51,20 @@ class ReplaceVisitor extends NodeVisitorAbstract
                 'class ' . $this->newName->getLast()
             );
             static::$targetClass = true;
-        } elseif ($node instanceof Stmt\Use_) {
+        } elseif ($node instanceof Stmt\Use_ || $node instanceof Stmt\GroupUse) {
             foreach ($node->uses as $use) {
                 if ($this->isNameMatched($use->name)) {
                     $this->addNameModification($use, $use->name);
                 }
+            }
+        } elseif ($node instanceof Expr\FuncCall && $node->name->isFullyQualified()) {
+            $funcNameSpace = $node->name->slice(0, count($node->name->parts) - 1)->toString();
+            if ($funcNameSpace === $this->targetName->toString()) {
+                $this->code->addModification(
+                    $node->getAttribute('startFilePos'),
+                    '\\' . $funcNameSpace,
+                    '\\' . $this->newName->toString()
+                );
             }
         } elseif ($node instanceof Expr\New_ && $this->isNameMatched($node->class)) {
             $this->addNameModification($node, $node->class, 'new');
@@ -74,7 +83,7 @@ class ReplaceVisitor extends NodeVisitorAbstract
         $removed = $name->toString();
         $inserted = $this->newName->toString();
         if ($prefix !== null) {
-            // NameResolver doesn't append first backslash and MutableString position shifts to one right
+            // NameResolver doesn't append first backslash so MutableString position shifts to one right
             $prefix .= count($name->parts) > 1 ? ' \\' : ' ';
             $removed = $prefix . $removed;
             $inserted = $prefix . $inserted;

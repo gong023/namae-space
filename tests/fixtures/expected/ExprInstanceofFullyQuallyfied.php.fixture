@@ -1,0 +1,11 @@
+<?php
+
+class Sample
+{
+    public function __construct()
+    {
+        if ('a' instanceof \Test\Replaced) {
+            echo 'hi';
+        }
+    }
+}

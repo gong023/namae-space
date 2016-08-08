@@ -68,6 +68,14 @@ class ReplaceVisitor extends NodeVisitorAbstract
             }
         } elseif ($node instanceof Expr\New_ && $this->isNameMatched($node->class)) {
             $this->addNameModification($node, $node->class, 'new');
+        } elseif ($node instanceof Expr\Instanceof_ && $this->isNameMatched($node->class)) {
+            $removed = $node->class->toString();
+            $inserted = $this->newName->toString();
+            if (count($node->class->parts) > 1) {
+                $removed = '\\' . $removed;
+                $inserted = '\\' . $inserted;
+            }
+            $this->code->addModification($node->class->getAttribute('startFilePos'), $removed, $inserted);
         }
 
         return null;

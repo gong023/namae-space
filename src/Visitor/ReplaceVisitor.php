@@ -5,7 +5,6 @@ namespace NamaeSpace\Visitor;
 use NamaeSpace\MutableString;
 use PhpParser\Node;
 use PhpParser\Node\Name;
-use PhpParser\NodeAbstract;
 use PhpParser\NodeVisitorAbstract;
 use PhpParser\Node\Stmt;
 use PhpParser\Node\Expr;
@@ -91,16 +90,29 @@ class ReplaceVisitor extends NodeVisitorAbstract
 
     private function addNameModification(Name $removed)
     {
-        $inserted = $this->newName->toString();
         $pos = $removed->getAttribute('startFilePos');
-        $removed = $removed->toString();
-        // NameResolver doesn't append first backslash so MutableString position shifts to one right.
-        // PhpParser\Node\Name#isFullyQualified doesn't work to judge we should add backslash or not.
-        if (strpos($this->code->getOrigin(), '\\', $pos) === $pos) {
-            $removed = '\\' . $removed;
-            $inserted = '\\' . $inserted;
-        }
+        list($removedStr, $insertedStr) = $this->getModifyStrings($pos, $removed);
 
-        $this->code->addModification($pos, $removed, $inserted);
+        $this->code->addModification($pos, $removedStr, $insertedStr);
+    }
+
+    private function getModifyStrings($pos, Name $removed)
+    {
+        $origin = $this->code->getOrigin();
+        for ($i = -1; $i >= -count($removed->parts); $i--) {
+            $removedStr = $removed->slice($i)->toString();
+            // NameResolver doesn't append first backslash so MutableString position shifts to one right.
+            // PhpParser\Node\Name#isFullyQualified doesn't work to judge we should add backslash or not.
+            $needBackSlash = false;
+            if (strpos($this->code->getOrigin(), '\\', $pos) === $pos) {
+                $removedStr = '\\' . $removedStr;
+                $needBackSlash = true;
+            }
+            $originStr = substr($origin, $pos, strlen($removedStr));
+            if ($originStr === $removedStr) {
+                $insertedStr = $needBackSlash ? '\\' . $this->newName->slice($i)->toString() : $this->newName->slice($i)->toString();
+                return [$removedStr, $insertedStr];
+            }
+        }
     }
 }

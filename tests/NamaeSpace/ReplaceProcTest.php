@@ -33,6 +33,8 @@ class ReplaceProcTest extends \PHPUnit_Framework_TestCase
             ['ExprInstanceof', 'Origin', 'Replaced'],
             ['ExprInstanceofFullyQuallyfied', 'Test\\Origin', 'Test\\Replaced'],
             ['StmtCatch', 'Origin', 'Replaced'],
+            ['StmtClassMethod', 'Origin', 'Replaced'],
+//            ['Integration', 'A\\B\\Origin', 'A\\B\\Replaced'],
         ];
     }
 }

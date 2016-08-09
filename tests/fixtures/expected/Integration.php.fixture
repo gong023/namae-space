@@ -1,0 +1,17 @@
+<?php
+
+use A\B\Replaced;
+
+class Sample
+{
+    public function __construct(Replaced $class)
+    {
+        try {
+            if ($class instanceof Replaced) {
+                Replaced\func('arg');
+            }
+        } catch (Replaced $e) {
+            throw new Replaced();
+        }
+    }
+}

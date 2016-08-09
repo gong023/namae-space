@@ -1,0 +1,17 @@
+<?php
+
+use A\B\Origin;
+
+class Sample
+{
+    public function __construct(Origin $class)
+    {
+        try {
+            if ($class instanceof Origin) {
+                Origin\func('arg');
+            }
+        } catch (Origin $e) {
+            throw new Origin();
+        }
+    }
+}

@@ -78,6 +78,12 @@ class ReplaceVisitor extends NodeVisitorAbstract
                     $this->addNameModification($type);
                 }
             }
+        } elseif ($node instanceof Stmt\TraitUse) {
+            foreach ($node->traits as $trait) {
+                if ($this->isNameMatched($trait)) {
+                    $this->addNameModification($trait);
+                }
+            }
         }
 
         return null;

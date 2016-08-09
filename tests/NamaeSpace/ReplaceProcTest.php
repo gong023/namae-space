@@ -26,21 +26,13 @@ class ReplaceProcTest extends \PHPUnit_Framework_TestCase
     {
         return [
             ['ExprNew', 'Origin', 'Replaced'],
+            ['ExprNewFullyQuallyfied', 'Test\\A\\Origin', 'Test\\B\\Replaced'],
             ['StmtUse', 'A\\B\\Origin', 'A\\B\\Replaced'],
             ['StmtGroupUse', 'Origin', 'Replaced'],
             ['ExprFuncCall', 'Origin', 'Replaced'],
             ['ExprInstanceof', 'Origin', 'Replaced'],
             ['ExprInstanceofFullyQuallyfied', 'Test\\Origin', 'Test\\Replaced'],
+            ['StmtCatch', 'Origin', 'Replaced'],
         ];
-    }
-
-    public function testReplaceFullyQualified()
-    {
-        list($expected, $target) = loadFixture('ExprNewFullyQuallyfied');
-        $replaceProc = ReplaceProc::create(new Name('Test\\A\\Origin'), new Name('Test\\B\\Replaced'));
-        $code = $replaceProc->replace($target);
-
-        $this->assertSame($target, $code->getOrigin());
-        $this->assertSame($expected, $code->getModified());
     }
 }

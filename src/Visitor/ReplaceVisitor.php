@@ -54,28 +54,24 @@ class ReplaceVisitor extends NodeVisitorAbstract
         } elseif ($node instanceof Stmt\Use_ || $node instanceof Stmt\GroupUse) {
             foreach ($node->uses as $use) {
                 if ($this->isNameMatched($use->name)) {
-                    $this->addNameModification($use, $use->name);
+                    $this->addNameModification($use->name->getAttribute('startFilePos'), $use->name->toString());
                 }
             }
         } elseif ($node instanceof Expr\FuncCall && $node->name->isFullyQualified()) {
             $funcNameSpace = $node->name->slice(0, count($node->name->parts) - 1)->toString();
             if ($funcNameSpace === $this->targetName->toString()) {
-                $this->code->addModification(
-                    $node->getAttribute('startFilePos'),
-                    '\\' . $funcNameSpace,
-                    '\\' . $this->newName->toString()
-                );
+                $this->addNameModification($node->getAttribute('startFilePos'), $funcNameSpace);
             }
-        } elseif ($node instanceof Expr\New_ && $this->isNameMatched($node->class)) {
-            $this->addNameModification($node, $node->class, 'new');
-        } elseif ($node instanceof Expr\Instanceof_ && $this->isNameMatched($node->class)) {
-            $removed = $node->class->toString();
-            $inserted = $this->newName->toString();
-            if (count($node->class->parts) > 1) {
-                $removed = '\\' . $removed;
-                $inserted = '\\' . $inserted;
+        } elseif ($node instanceof Expr\New_ && $this->isNameMatched($node->class)
+            || $node instanceof Expr\Instanceof_ && $this->isNameMatched($node->class)
+        ) {
+            $this->addNameModification($node->class->getAttribute('startFilePos'), $node->class->toString());
+        } elseif ($node instanceof Stmt\Catch_) {
+            foreach ($node->types as $type) {
+                if ($this->isNameMatched($type)) {
+                    $this->addNameModification($type->getAttribute('startFilePos'), $type->toString());
+                }
             }
-            $this->code->addModification($node->class->getAttribute('startFilePos'), $removed, $inserted);
         }
 
         return null;
@@ -86,17 +82,16 @@ class ReplaceVisitor extends NodeVisitorAbstract
         return $name->toString() === $this->targetName->toString();
     }
 
-    private function addNameModification(NodeAbstract $node, Name $name, $prefix = null)
+    private function addNameModification($pos, $removed)
     {
-        $removed = $name->toString();
         $inserted = $this->newName->toString();
-        if ($prefix !== null) {
-            // NameResolver doesn't append first backslash so MutableString position shifts to one right
-            $prefix .= count($name->parts) > 1 ? ' \\' : ' ';
-            $removed = $prefix . $removed;
-            $inserted = $prefix . $inserted;
+        // NameResolver doesn't append first backslash so MutableString position shifts to one right.
+        // PhpParser\Node\Name#isFullyQualified doesn't work to judge we should add backslash or not.
+        if (strpos($this->code->getOrigin(), '\\', $pos) === $pos) {
+            $removed = '\\' . $removed;
+            $inserted = '\\' . $inserted;
         }
 
-        $this->code->addModification($node->getAttribute('startFilePos'), $removed, $inserted);
+        $this->code->addModification($pos, $removed, $inserted);
     }
 }

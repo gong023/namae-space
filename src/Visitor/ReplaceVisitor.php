@@ -66,9 +66,9 @@ class ReplaceVisitor extends NodeVisitorAbstract
             || $node instanceof Expr\Instanceof_ && $this->isNameMatched($node->class)
         ) {
             $this->addNameModification($node->class);
-        } elseif ($node instanceof Stmt\ClassMethod) {
+        } elseif ($node instanceof Stmt\ClassMethod || $node instanceof Stmt\Function_ || $node instanceof Expr\Closure) {
             foreach ($node->params as $param) {
-                if ($this->isNameMatched($param->type)) {
+                if ($param->type instanceof Name && $this->isNameMatched($param->type)) {
                     $this->addNameModification($param->type);
                 }
             }

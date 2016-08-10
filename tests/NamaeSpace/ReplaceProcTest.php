@@ -37,6 +37,7 @@ class ReplaceProcTest extends \PHPUnit_Framework_TestCase
             ['StmtFunction', 'Origin', 'Replaced'],
             ['ExprClosure', 'Origin', 'Replaced'],
             ['TraitUse', 'Origin', 'Replaced'],
+            ['ExprStaticCall', 'Origin', 'Replaced'],
             ['AsAlias', 'A\\B\\Origin', 'A\\B\\Replaced'],
             ['Integration', 'A\\B\\Origin', 'A\\B\\Replaced'],
         ];

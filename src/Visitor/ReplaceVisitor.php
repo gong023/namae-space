@@ -52,50 +52,42 @@ class ReplaceVisitor extends NodeVisitorAbstract
             static::$targetClass = true;
         } elseif ($node instanceof Stmt\Use_ || $node instanceof Stmt\GroupUse) {
             foreach ($node->uses as $use) {
-                if ($this->isNameMatched($use->name)) {
-                    $this->addNameModification($use->name);
-                }
+                $this->addMatchedNameModification($use->name);
             }
         } elseif ($node instanceof Expr\FuncCall && $node->name instanceof Name && $node->name->isFullyQualified()) {
             /** @var Name $funcNameSpace */
             $funcNameSpace = $node->name->slice(0, count($node->name->parts) - 1);
-            if ($funcNameSpace->toString() === $this->targetName->toString()) {
-                $this->addNameModification($funcNameSpace);
-            }
-        } elseif ($node instanceof Expr\New_ && $this->isNameMatched($node->class)
-            || $node instanceof Expr\Instanceof_ && $this->isNameMatched($node->class)
+            $this->addMatchedNameModification($funcNameSpace);
+        } elseif ($node instanceof Expr\New_
+            || $node instanceof Expr\Instanceof_
+            || $node instanceof Expr\StaticCall
         ) {
-            $this->addNameModification($node->class);
+            $this->addMatchedNameModification($node->class);
         } elseif ($node instanceof Stmt\ClassMethod || $node instanceof Stmt\Function_ || $node instanceof Expr\Closure) {
             foreach ($node->params as $param) {
-                if ($param->type instanceof Name && $this->isNameMatched($param->type)) {
-                    $this->addNameModification($param->type);
+                if ($param->type instanceof Name) {
+                    $this->addMatchedNameModification($param->type);
                 }
             }
         } elseif ($node instanceof Stmt\Catch_) {
             foreach ($node->types as $type) {
-                if ($this->isNameMatched($type)) {
-                    $this->addNameModification($type);
-                }
+                $this->addMatchedNameModification($type);
             }
         } elseif ($node instanceof Stmt\TraitUse) {
             foreach ($node->traits as $trait) {
-                if ($this->isNameMatched($trait)) {
-                    $this->addNameModification($trait);
-                }
+                $this->addMatchedNameModification($trait);
             }
         }
 
         return null;
     }
 
-    private function isNameMatched(Name $name)
+    private function addMatchedNameModification(Name $removed)
     {
-        return $name->toString() === $this->targetName->toString();
-    }
+        if ($removed->toString() !== $this->targetName->toString()) {
+            return;
+        }
 
-    private function addNameModification(Name $removed)
-    {
         $pos = $removed->getAttribute('startFilePos');
         list($removedStr, $insertedStr) = $this->getModifyStrings($pos, $removed);
 

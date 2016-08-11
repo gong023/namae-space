@@ -2,7 +2,7 @@
 
 use A\B\Replaced;
 
-class Sample
+class Sample extends Replaced implements Replaced
 {
     public function __construct(Replaced $class)
     {

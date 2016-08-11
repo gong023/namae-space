@@ -41,6 +41,9 @@ class ReplaceProcTest extends \PHPUnit_Framework_TestCase
             ['ExprStaticPropertyFetch', 'Origin', 'Replaced'],
             ['ExprClassConstFetch', 'Origin', 'Replaced'],
             ['AsAlias', 'A\\B\\Origin', 'A\\B\\Replaced'],
+            ['StmtClassExtends', 'Origin', 'Replaced'],
+            ['StmtClassImplements', 'Origin', 'Replaced'],
+            ['StmtInterfaceExtends', 'Origin', 'Replaced'],
             ['Integration', 'A\\B\\Origin', 'A\\B\\Replaced'],
         ];
     }

@@ -2,7 +2,7 @@
 
 use A\B\Origin;
 
-class Sample
+class Sample extends Origin implements Origin
 {
     public function __construct(Origin $class)
     {

@@ -43,13 +43,26 @@ class ReplaceVisitor extends NodeVisitorAbstract
 
     public function leaveNode(Node $node)
     {
-        if ($node instanceof Stmt\ClassLike && $node->name === $this->targetName->getLast()) {
-            $this->code->addModification(
-                $node->getAttribute('startFilePos'),
-                'class ' . $node->name,
-                'class ' . $this->newName->getLast()
-            );
-            static::$targetClass = true;
+        if ($node instanceof Stmt\Class_) {
+            if ($node->name === $this->targetName->getLast()) {
+                static::$targetClass = true;
+            } elseif ($node->extends !== null) {
+                $this->addMatchedNameModification($node->extends);
+            }
+            foreach ($node->implements as $implement) {
+                $this->addMatchedNameModification($implement);
+            }
+        } elseif ($node instanceof Stmt\Interface_) {
+            if ($node->name === $this->targetName->getLast()) {
+                static::$targetClass = true;
+            }
+            foreach ($node->extends as $extend) {
+                $this->addMatchedNameModification($extend);
+            }
+        } elseif ($node instanceof Stmt\Trait_) {
+            if ($node->name === $this->targetName->getLast()) {
+                static::$targetClass = true;
+            }
         } elseif ($node instanceof Stmt\Use_ || $node instanceof Stmt\GroupUse) {
             foreach ($node->uses as $use) {
                 $this->addMatchedNameModification($use->name);
@@ -81,6 +94,9 @@ class ReplaceVisitor extends NodeVisitorAbstract
             }
         }
 
+        if (self::$targetClass && $node instanceof Stmt\Namespace_) {
+        }
+
         return null;
     }
 
@@ -102,7 +118,7 @@ class ReplaceVisitor extends NodeVisitorAbstract
         for ($i = -1; $i >= -count($removed->parts); $i--) {
             $removedStr = $removed->slice($i)->toString();
             // NameResolver doesn't append first backslash so MutableString position shifts to one right.
-            // PhpParser\Node\Name#isFullyQualified doesn't work to judge we should add backslash or not.
+            // Functions such as Name#isFullyQualified don't work to know we should add backslash or not.
             $needBackSlash = false;
             if (strpos($this->code->getOrigin(), '\\', $pos) === $pos) {
                 $removedStr = '\\' . $removedStr;

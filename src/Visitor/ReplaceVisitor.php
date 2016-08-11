@@ -61,6 +61,8 @@ class ReplaceVisitor extends NodeVisitorAbstract
         } elseif ($node instanceof Expr\New_
             || $node instanceof Expr\Instanceof_
             || $node instanceof Expr\StaticCall
+            || $node instanceof Expr\StaticPropertyFetch
+            || $node instanceof Expr\ClassConstFetch
         ) {
             $this->addMatchedNameModification($node->class);
         } elseif ($node instanceof Stmt\ClassMethod || $node instanceof Stmt\Function_ || $node instanceof Expr\Closure) {

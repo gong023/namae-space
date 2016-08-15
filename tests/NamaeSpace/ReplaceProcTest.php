@@ -2,6 +2,7 @@
 
 namespace NamaeSpace;
 
+use NamaeSpace\Visitor\ReplaceVisitor;
 use PhpParser\Node\Name;
 
 class ReplaceProcTest extends \PHPUnit_Framework_TestCase
@@ -17,6 +18,7 @@ class ReplaceProcTest extends \PHPUnit_Framework_TestCase
         list($expected, $origin) = loadFixture($file);
         $replaceProc = ReplaceProc::create(new Name($originName), new Name($newName));
         $code = $replaceProc->replace($origin);
+        ReplaceVisitor::$targetClass = false;
 
         $this->assertSame($origin, $code->getOrigin(), $file);
         $this->assertSame($expected, $code->getModified(), $file);
@@ -44,6 +46,8 @@ class ReplaceProcTest extends \PHPUnit_Framework_TestCase
             ['StmtClassExtends', 'Origin', 'Replaced'],
             ['StmtClassImplements', 'Origin', 'Replaced'],
             ['StmtInterfaceExtends', 'Origin', 'Replaced'],
+            ['StmtClassTarget', 'A\\B\\Origin', 'A\\XXX\\Replaced'],
+            ['StmtClassNonTarget', 'A\\B\\Origin', 'A\\B\\Replaced'],
             ['Integration', 'A\\B\\Origin', 'A\\B\\Replaced'],
         ];
     }

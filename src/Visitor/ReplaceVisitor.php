@@ -44,8 +44,13 @@ class ReplaceVisitor extends NodeVisitorAbstract
     public function leaveNode(Node $node)
     {
         if ($node instanceof Stmt\Class_) {
-            if ($node->name === $this->targetName->getLast()) {
+            if (isset($node->namespacedName) && $node->namespacedName->toString() === $this->targetName->toString()) {
                 static::$targetClass = true;
+                $this->code->addModification(
+                    $node->getAttribute('startFilePos'),
+                    'class ' . $node->namespacedName->getLast(),
+                    'class ' . $this->newName->getLast()
+                );
             } elseif ($node->extends !== null) {
                 $this->addMatchedNameModification($node->extends);
             }
@@ -94,7 +99,10 @@ class ReplaceVisitor extends NodeVisitorAbstract
             }
         }
 
-        if (self::$targetClass && $node instanceof Stmt\Namespace_) {
+        if (self::$targetClass && $node instanceof Stmt\Namespace_ && $node->name instanceof Name) {
+            $removed = $node->name->toString();
+            $inserted = $this->newName->slice(0, count($this->newName->parts) - 1)->toString();
+            $this->code->addModification($node->name->getAttribute('startFilePos'), $removed, $inserted);
         }
 
         return null;

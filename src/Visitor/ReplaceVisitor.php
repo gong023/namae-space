@@ -58,15 +58,25 @@ class ReplaceVisitor extends NodeVisitorAbstract
                 $this->addMatchedNameModification($implement);
             }
         } elseif ($node instanceof Stmt\Interface_) {
-            if ($node->name === $this->targetName->getLast()) {
+            if (isset($node->namespacedName) && $node->namespacedName->toString() === $this->targetName->toString()) {
                 static::$targetClass = true;
+                $this->code->addModification(
+                    $node->getAttribute('startFilePos'),
+                    'interface ' . $node->namespacedName->getLast(),
+                    'interface ' . $this->newName->getLast()
+                );
             }
             foreach ($node->extends as $extend) {
                 $this->addMatchedNameModification($extend);
             }
         } elseif ($node instanceof Stmt\Trait_) {
-            if ($node->name === $this->targetName->getLast()) {
+            if (isset($node->namespacedName) && $node->namespacedName->toString() === $this->targetName->toString()) {
                 static::$targetClass = true;
+                $this->code->addModification(
+                    $node->getAttribute('startFilePos'),
+                    'trait ' . $node->namespacedName->getLast(),
+                    'trait ' . $this->newName->getLast()
+                );
             }
         } elseif ($node instanceof Stmt\Use_ || $node instanceof Stmt\GroupUse) {
             foreach ($node->uses as $use) {

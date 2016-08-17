@@ -65,14 +65,14 @@ class ReplaceCommand extends Command
             $originNameSpace = $helper->ask($input, $output, new Question('origin name space: '));
             $input->setOption('origin_namespace', $originNameSpace);
         }
-        $originName = preg_replace('^\\', '', $input->getOption('origin_namespace'));
+        $originName = preg_replace('/^\\\/', '', $input->getOption('origin_namespace'));
         $this->originNameSpace = new Name($originName);
 
         if (! $input->getOption('new_namespace')) {
             $newNameSpace = $helper->ask($input, $output, new Question('new name space: '));
             $input->setOption('new_namespace', $newNameSpace);
         }
-        $newName = preg_replace('^\\', '', $input->getOption('new_namespace'));
+        $newName = preg_replace('/^\\\/', '', $input->getOption('new_namespace'));
         $this->newNameSpace = new Name($newName);
 
         $this->composerContent = ComposerContent::instantiate($input->getOption('composer_json'));
@@ -108,8 +108,12 @@ class ReplaceCommand extends Command
             $this->composerContent->getReadDirPath(),
             $search,
             function ($basePath, \SplFileInfo $fileInfo) use ($replacer, $differ, $input, $output) {
-                $code = $replacer->replace(file_get_contents($fileInfo->getRealPath()));
-                $replacedCode = $code->getModified();
+                try {
+                    $code = $replacer->replace(file_get_contents($fileInfo->getRealPath()));
+                    $replacedCode = $code->getModified();
+                } catch (\PhpParser\Error $e) {
+                    throw new \RuntimeException("<{$fileInfo->getFilename()}> {$e->getMessage()}");
+                }
 
                 if ($input->getOption('dry_run')) {
                     if ($code->getOrigin() !== $replacedCode) {

@@ -328,9 +328,14 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
                             'A\\'  => ['src/', 'lib/'],
                         ],
                     ],
+                    'autoload-dev' => [
+                        'psr-4' => [
+                            'A\\'  => 'tests/',
+                        ],
+                    ],
                 ],
                 [
-                    'src/', 'lib/',
+                    'src/', 'lib/', 'tests/'
                 ]
             ],
             'underscoreSplit' => [

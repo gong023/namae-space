@@ -47,12 +47,12 @@ class ComposerContent
                     $path = preg_replace('/\/$/', '', $path);
 
                     return $path . '/' . $this->joinToString('/', $parts, count($parts) - 1);
-                }, $r);
+                }, array_values($r));
                 $matchLength = $c;
             }
         }
 
-        return array_values($dirsToReplace);
+        return $dirsToReplace;
     }
 
     public function getClassmapValues()

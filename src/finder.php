@@ -10,7 +10,7 @@ function applyToEachFile($basePath, array $targetPaths, callable $proc)
 {
     foreach ($targetPaths as $targetPath) {
         $targetPath = $basePath . '/' . $targetPath;
-        if (is_file($targetPath)) {
+        if (is_file($targetPath) && strpos($targetPath, '.php')) {
             $proc($basePath, new SplFileInfo($targetPath));
             continue;
         }
@@ -20,7 +20,7 @@ function applyToEachFile($basePath, array $targetPaths, callable $proc)
         );
         /** @var SplFileInfo $file */
         foreach ($it as $file) {
-            if ($file->isFile() || strpos($file->getPathname(), '.php')) {
+            if ($file->isFile() && strpos($file->getPathname(), '.php')) {
                 $proc($basePath, $file);
             }
         }

@@ -98,7 +98,7 @@ class ReplaceVisitor extends NodeVisitorAbstract
             $this->addMatchedNameModification($node->class);
         } elseif ($node instanceof Stmt\ClassMethod || $node instanceof Stmt\Function_ || $node instanceof Expr\Closure) {
             foreach ($node->params as $param) {
-                if ($param->type instanceof Name) {
+                if (isset($param->type)) {
                     $this->addMatchedNameModification($param->type);
                 }
             }
@@ -139,9 +139,9 @@ class ReplaceVisitor extends NodeVisitorAbstract
         return null;
     }
 
-    private function addMatchedNameModification(Name $removed)
+    private function addMatchedNameModification($removed)
     {
-        if ($removed->toString() !== $this->originName->toString()) {
+        if (!$removed instanceof Name || $removed->toString() !== $this->originName->toString()) {
             return;
         }
 

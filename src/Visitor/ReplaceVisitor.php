@@ -12,6 +12,7 @@ use PhpParser\Node\Expr;
 class ReplaceVisitor extends NodeVisitorAbstract
 {
     public static $targetClass = false;
+    private $named = false;
 
     /**
      * @var Name
@@ -109,10 +110,28 @@ class ReplaceVisitor extends NodeVisitorAbstract
             }
         }
 
-        if (self::$targetClass && $node instanceof Stmt\Namespace_ && $node->name instanceof Name) {
+        if (static::$targetClass && $node instanceof Stmt\Namespace_ && $node->name instanceof Name) {
             $removed = $node->name->toString();
             $inserted = $this->newName->slice(0, count($this->newName->parts) - 1)->toString();
             $this->code->addModification($node->name->getAttribute('startFilePos'), $removed, $inserted);
+            $this->named = true;
+        }
+
+        // NamaeSpace modifies code string itself instead of changing tree directly.
+        // visit https://github.com/nikic/PHP-Parser/issues/41 to know more detail.
+        return null;
+    }
+
+    /**
+     * @param Node[] $nodes
+     * @return null
+     */
+    public function afterTraverse(array $nodes)
+    {
+        if (static::$targetClass && !$this->named) {
+            $inserted = "\nnamespace " . $this->newName->slice(0, count($this->newName->parts) - 1)->toString() . ";\n";
+            $this->code->addModification(strlen("<?php\n"), '', $inserted);
+            $this->named = true;
         }
 
         return null;

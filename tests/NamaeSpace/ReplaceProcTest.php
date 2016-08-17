@@ -48,6 +48,7 @@ class ReplaceProcTest extends \PHPUnit_Framework_TestCase
             ['StmtInterfaceExtends', 'Origin', 'Replaced'],
             ['StmtClassTarget', 'A\\B\\Origin', 'A\\XXX\\Replaced'],
             ['StmtClassNonTarget', 'A\\B\\Origin', 'A\\B\\Replaced'],
+            ['StmtClassGlobal', 'Origin', 'A\\B\\Replaced'],
             ['StmtInterfaceTarget', 'A\\B\\Origin', 'A\\XXX\\Replaced'],
             ['StmtTraitTarget', 'A\\B\\Origin', 'A\\XXX\\Replaced'],
             ['Integration', 'A\\B\\Origin', 'A\\B\\Replaced'],

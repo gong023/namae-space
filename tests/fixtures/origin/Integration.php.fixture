@@ -2,7 +2,7 @@
 
 use A\B\Origin;
 
-class Sample extends Origin implements Origin
+class Sample extends Origin
 {
     public function __construct(Origin $class)
     {
@@ -14,4 +14,12 @@ class Sample extends Origin implements Origin
             throw new Origin();
         }
     }
+}
+
+class Sample2 implements Origin
+{
+}
+
+interface Sample3 extends Origin
+{
 }

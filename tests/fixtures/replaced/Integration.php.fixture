@@ -2,7 +2,7 @@
 
 use A\B\Replaced;
 
-class Sample extends Replaced implements Replaced
+class Sample extends Replaced
 {
     public function __construct(Replaced $class)
     {
@@ -14,4 +14,12 @@ class Sample extends Replaced implements Replaced
             throw new Replaced();
         }
     }
+}
+
+class Sample2 implements Replaced
+{
+}
+
+interface Sample3 extends Replaced
+{
 }

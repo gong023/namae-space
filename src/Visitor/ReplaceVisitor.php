@@ -17,7 +17,7 @@ class ReplaceVisitor extends NodeVisitorAbstract
     /**
      * @var Name
      */
-    private $targetName;
+    private $originName;
 
     /**
      * @var Name
@@ -29,9 +29,9 @@ class ReplaceVisitor extends NodeVisitorAbstract
      */
     private $code;
 
-    public function __construct(Name $targetName, Name $newName)
+    public function __construct(Name $originName, Name $newName)
     {
-        $this->targetName = $targetName;
+        $this->originName = $originName;
         $this->newName = $newName;
     }
 
@@ -45,7 +45,7 @@ class ReplaceVisitor extends NodeVisitorAbstract
     public function leaveNode(Node $node)
     {
         if ($node instanceof Stmt\Class_) {
-            if (isset($node->namespacedName) && $node->namespacedName->toString() === $this->targetName->toString()) {
+            if (isset($node->namespacedName) && $node->namespacedName->toString() === $this->originName->toString()) {
                 static::$targetClass = true;
                 $this->code->addModification(
                     $node->getAttribute('startFilePos'),
@@ -54,24 +54,26 @@ class ReplaceVisitor extends NodeVisitorAbstract
                 );
             } elseif ($node->extends !== null) {
                 $this->addMatchedNameModification($node->extends);
-            }
-            foreach ($node->implements as $implement) {
-                $this->addMatchedNameModification($implement);
+            } else {
+                foreach ($node->implements as $implement) {
+                    $this->addMatchedNameModification($implement);
+                }
             }
         } elseif ($node instanceof Stmt\Interface_) {
-            if (isset($node->namespacedName) && $node->namespacedName->toString() === $this->targetName->toString()) {
+            if (isset($node->namespacedName) && $node->namespacedName->toString() === $this->originName->toString()) {
                 static::$targetClass = true;
                 $this->code->addModification(
                     $node->getAttribute('startFilePos'),
                     'interface ' . $node->namespacedName->getLast(),
                     'interface ' . $this->newName->getLast()
                 );
-            }
-            foreach ($node->extends as $extend) {
-                $this->addMatchedNameModification($extend);
+            } else {
+                foreach ($node->extends as $extend) {
+                    $this->addMatchedNameModification($extend);
+                }
             }
         } elseif ($node instanceof Stmt\Trait_) {
-            if (isset($node->namespacedName) && $node->namespacedName->toString() === $this->targetName->toString()) {
+            if (isset($node->namespacedName) && $node->namespacedName->toString() === $this->originName->toString()) {
                 static::$targetClass = true;
                 $this->code->addModification(
                     $node->getAttribute('startFilePos'),
@@ -139,7 +141,7 @@ class ReplaceVisitor extends NodeVisitorAbstract
 
     private function addMatchedNameModification(Name $removed)
     {
-        if ($removed->toString() !== $this->targetName->toString()) {
+        if ($removed->toString() !== $this->originName->toString()) {
             return;
         }
 

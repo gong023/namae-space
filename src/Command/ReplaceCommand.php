@@ -26,7 +26,7 @@ class ReplaceCommand extends Command
     /**
      * @var Name
      */
-    private $targetNameSpace;
+    private $originNameSpace;
 
     /**
      * @var Name
@@ -40,7 +40,7 @@ class ReplaceCommand extends Command
             ->setDescription('replace namespace')
             ->addOption('composer_json', 'C', InputOption::VALUE_OPTIONAL)
             ->addOption('additional_path', 'A', InputOption::VALUE_OPTIONAL)
-            ->addOption('target_namespace', 'T', InputOption::VALUE_OPTIONAL)
+            ->addOption('origin_namespace', 'O', InputOption::VALUE_OPTIONAL)
             ->addOption('new_namespace', 'N', InputOption::VALUE_OPTIONAL)
             ->addOption('replace_dir', 'R', InputOption::VALUE_OPTIONAL)
             ->addOption('dry_run', 'D', InputOption::VALUE_NONE);
@@ -61,12 +61,12 @@ class ReplaceCommand extends Command
             }
         }
 
-        if (! $input->getOption('target_namespace')) {
-            $targetNameSpace = $helper->ask($input, $output, new Question('target name space: '));
-            $input->setOption('target_namespace', $targetNameSpace);
+        if (! $input->getOption('origin_namespace')) {
+            $originNameSpace = $helper->ask($input, $output, new Question('origin name space: '));
+            $input->setOption('origin_namespace', $originNameSpace);
         }
-        $targetName = preg_replace('^\\', '', $input->getOption('target_namespace'));
-        $this->targetNameSpace = new Name($targetName);
+        $originName = preg_replace('^\\', '', $input->getOption('origin_namespace'));
+        $this->originNameSpace = new Name($originName);
 
         if (! $input->getOption('new_namespace')) {
             $newNameSpace = $helper->ask($input, $output, new Question('new name space: '));
@@ -96,7 +96,7 @@ class ReplaceCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $replacer = ReplaceProc::create($this->targetNameSpace, $this->newNameSpace);
+        $replacer = ReplaceProc::create($this->originNameSpace, $this->newNameSpace);
         $differ = new Differ("--- Original\n+++ New\n", false);
 
         $search = array_merge(
@@ -121,7 +121,7 @@ class ReplaceCommand extends Command
 
                 if (ReplaceVisitor::$targetClass) {
                     ReplaceVisitor::$targetClass = false;
-                    $outputFilePath = "$basePath/{$input->getOption('replace_dir')}/{$this->targetNameSpace->getLast()}.php";
+                    $outputFilePath = "$basePath/{$input->getOption('replace_dir')}/{$this->originNameSpace->getLast()}.php";
                     @mkdir("$basePath/{$input->getOption('replace_dir')}", 0777, true);
                     file_put_contents($outputFilePath, $replacedCode);
                     @unlink($fileInfo->getRealPath());

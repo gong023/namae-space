@@ -51,7 +51,7 @@ class ReplaceProc
     public static function create(Name $originName, Name $newName)
     {
         // TODO: move to the other file except adding ReplaceVisitor
-        $lexer = new Lexer(['usedAttributes' => ['startFilePos', 'endFilePos']]);
+        $lexer = new Lexer(['usedAttributes' => ['startFilePos']]);
         $parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP5, $lexer);
         $traverser = new NodeTraverser();
         $traverser->addVisitor(new NameResolver());

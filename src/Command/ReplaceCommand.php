@@ -119,6 +119,7 @@ class ReplaceCommand extends Command
                         $output->writeln('<info>' . $fileInfo->getFilename() . '</info>');
                         $output->writeln($differ->diff($code->getOrigin(), $code->getModified()));
                     }
+                    ReplaceVisitor::$targetClass = false;
                     return;
                 }
 

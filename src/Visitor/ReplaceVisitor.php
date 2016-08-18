@@ -48,6 +48,12 @@ class ReplaceVisitor extends NodeVisitorAbstract
         return $this;
     }
 
+    public function beforeTraverse(array $nodes)
+    {
+        $this->named = $this->stmtUseModified = false;
+        $this->stmtNameSpacePosEnd = $this->stmtClassLikePosStart = $this->stmtUsesPosStart = null;
+    }
+
     public function leaveNode(Node $node)
     {
         if ($node instanceof Stmt\Class_) {
@@ -139,7 +145,7 @@ class ReplaceVisitor extends NodeVisitorAbstract
         }
 
         if ($node instanceof Stmt\Namespace_ && $node->name instanceof Name) {
-            $this->stmtNameSpacePosEnd = $node->name->getAttribute('endFilePos') + strlen(" {$node->name->toString()};");
+            $this->stmtNameSpacePosEnd = $node->name->getAttribute('startFilePos') + strlen($node->name->toString() . ";\n");
             if (static::$targetClass) {
                 $removed = $node->name->toString();
                 $inserted = $this->newName->slice(0, count($this->newName->parts) - 1)->toString();

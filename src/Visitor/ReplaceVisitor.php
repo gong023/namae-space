@@ -222,13 +222,7 @@ class ReplaceVisitor extends NodeVisitorAbstract
             return;
         }
 
-        if ($this->newName->isUnqualified()) {
-            $useValue = $this->newName->toString();
-        } else {
-            $useValue = $this->newName->slice(0, count($this->newName->parts) - 1)->toString();
-        }
-
-        $this->code->addModification($pos, '', "\nuse {$useValue};\n");
+        $this->code->addModification($pos, '', "\nuse {$this->newName->toString()};\n");
         $this->stmtUseModified = true;
     }
 }

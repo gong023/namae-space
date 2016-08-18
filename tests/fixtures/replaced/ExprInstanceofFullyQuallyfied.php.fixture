@@ -1,6 +1,6 @@
 <?php
 
-use Test;
+use Test\Replaced;
 
 class Sample
 {

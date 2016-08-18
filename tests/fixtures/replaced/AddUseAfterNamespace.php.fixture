@@ -1,11 +1,13 @@
 <?php
 
-use Test\B\Replaced;
+namespace X;
+
+use A\B\Replaced;
 
 class Sample
 {
     public function __construct()
     {
-        $this->value = new Replaced('argument');
+        $this->var = new Replaced;
     }
 }

@@ -27,5 +27,5 @@ $prettyPrinter = new Standard(['shortArraySyntax' => true]);
 
 $app = new Application();
 $app->add(new ReplaceCommand());
-$app->add(new FindCommand($parser, $traverser));
+//$app->add(new FindCommand($parser, $traverser));
 $app->run();

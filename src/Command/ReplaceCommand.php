@@ -124,7 +124,7 @@ class ReplaceCommand extends Command
 
                 if (ReplaceVisitor::$targetClass) {
                     ReplaceVisitor::$targetClass = false;
-                    $outputFilePath = "$basePath/{$input->getOption('replace_dir')}/{$this->originNameSpace->getLast()}.php";
+                    $outputFilePath = "$basePath/{$input->getOption('replace_dir')}/{$this->newNameSpace->getLast()}.php";
                     @mkdir("$basePath/{$input->getOption('replace_dir')}", 0777, true);
                     file_put_contents($outputFilePath, $code->getModified());
                     @unlink($fileInfo->getRealPath());

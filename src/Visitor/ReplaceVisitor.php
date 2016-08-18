@@ -12,7 +12,13 @@ use PhpParser\Node\Expr;
 class ReplaceVisitor extends NodeVisitorAbstract
 {
     public static $targetClass = false;
+
+    // ugly properties to add use stmt
     private $named = false;
+    private $stmtUseModified = false;
+    private $stmtNameSpacePosEnd;
+    private $stmtClassLikePosStart;
+    private $stmtUsesPosStart;
 
     /**
      * @var Name
@@ -45,6 +51,9 @@ class ReplaceVisitor extends NodeVisitorAbstract
     public function leaveNode(Node $node)
     {
         if ($node instanceof Stmt\Class_) {
+            if (isset($node->namespacedName)) {
+                $this->stmtClassLikePosStart = $node->getAttribute('startFilePos') - 1;
+            }
             if (isset($node->namespacedName) && $node->namespacedName->toString() === $this->originName->toString()) {
                 static::$targetClass = true;
                 $this->code->addModification(
@@ -60,6 +69,9 @@ class ReplaceVisitor extends NodeVisitorAbstract
                 }
             }
         } elseif ($node instanceof Stmt\Interface_) {
+            if (isset($node->namespacedName)) {
+                $this->stmtClassLikePosStart = $node->getAttribute('startFilePos') - 1;
+            }
             if (isset($node->namespacedName) && $node->namespacedName->toString() === $this->originName->toString()) {
                 static::$targetClass = true;
                 $this->code->addModification(
@@ -73,6 +85,9 @@ class ReplaceVisitor extends NodeVisitorAbstract
                 }
             }
         } elseif ($node instanceof Stmt\Trait_) {
+            if (isset($node->namespacedName)) {
+                $this->stmtClassLikePosStart = $node->getAttribute('startFilePos') - 1;
+            }
             if (isset($node->namespacedName) && $node->namespacedName->toString() === $this->originName->toString()) {
                 static::$targetClass = true;
                 $this->code->addModification(
@@ -83,7 +98,18 @@ class ReplaceVisitor extends NodeVisitorAbstract
             }
         } elseif ($node instanceof Stmt\Use_ || $node instanceof Stmt\GroupUse) {
             foreach ($node->uses as $use) {
-                $this->addMatchedNameModification($use->name);
+                if (!$use->name instanceof Name || $use->name->toString() !== $this->originName->toString()) {
+                    continue;
+                }
+                $this->stmtUseModified = true;
+                $this->code->addModification(
+                    $use->name->getAttribute('startFilePos'),
+                    $use->name->toString(),
+                    $this->newName->toString()
+                );
+            }
+            if ($node->uses[0] instanceof Name) {
+                $this->stmtUsesPosStart = $node->uses[0]->getAttribute('startFilePos') - 1;
             }
         } elseif ($node instanceof Expr\FuncCall && $node->name instanceof Name && $node->name->isFullyQualified()) {
             /** @var Name $funcNameSpace */
@@ -112,11 +138,14 @@ class ReplaceVisitor extends NodeVisitorAbstract
             }
         }
 
-        if (static::$targetClass && $node instanceof Stmt\Namespace_ && $node->name instanceof Name) {
-            $removed = $node->name->toString();
-            $inserted = $this->newName->slice(0, count($this->newName->parts) - 1)->toString();
-            $this->code->addModification($node->name->getAttribute('startFilePos'), $removed, $inserted);
-            $this->named = true;
+        if ($node instanceof Stmt\Namespace_ && $node->name instanceof Name) {
+            $this->stmtNameSpacePosEnd = $node->name->getAttribute('endFilePos') + strlen(" {$node->name->toString()};");
+            if (static::$targetClass) {
+                $removed = $node->name->toString();
+                $inserted = $this->newName->slice(0, count($this->newName->parts) - 1)->toString();
+                $this->code->addModification($node->name->getAttribute('startFilePos'), $removed, $inserted);
+                $this->named = true;
+            }
         }
 
         // NamaeSpace modifies code string itself instead of changing tree directly.
@@ -134,6 +163,21 @@ class ReplaceVisitor extends NodeVisitorAbstract
             $inserted = "\nnamespace " . $this->newName->slice(0, count($this->newName->parts) - 1)->toString() . ";\n";
             $this->code->addModification(strlen("<?php\n"), '', $inserted);
             $this->named = true;
+        }
+
+        if (!static::$targetClass
+            && !$this->stmtUseModified
+            && $this->code->hasModification()
+        ) {
+            if ($this->stmtNameSpacePosEnd) {
+                $this->addUseStmt($this->stmtNameSpacePosEnd);
+            } elseif ($this->stmtClassLikePosStart) {
+                $this->addUseStmt($this->stmtClassLikePosStart);
+            } elseif ($this->stmtUsesPosStart) {
+                $this->addUseStmt($this->stmtUsesPosStart);
+            } else {
+                $this->addUseStmt(strlen("<?php\n"));
+            }
         }
 
         return null;
@@ -158,16 +202,33 @@ class ReplaceVisitor extends NodeVisitorAbstract
             $removedStr = $removed->slice($i)->toString();
             // NameResolver doesn't append first backslash so MutableString position shifts to one right.
             // Functions such as Name#isFullyQualified don't work to know we should add backslash or not.
-            $needBackSlash = false;
             if (strpos($this->code->getOrigin(), '\\', $pos) === $pos) {
                 $removedStr = '\\' . $removedStr;
-                $needBackSlash = true;
             }
             $originStr = substr($origin, $pos, strlen($removedStr));
             if ($originStr === $removedStr) {
-                $insertedStr = $needBackSlash ? '\\' . $this->newName->slice($i)->toString() : $this->newName->slice($i)->toString();
-                return [$removedStr, $insertedStr];
+                return [$removedStr, $this->newName->getLast()];
             }
         }
+    }
+
+    private function addUseStmt($pos)
+    {
+        if ($this->stmtNameSpacePosEnd === null
+            && $this->originName->isUnqualified()
+            && $this->newName->isUnqualified()
+        ) {
+            $this->stmtUseModified = true;
+            return;
+        }
+
+        if ($this->newName->isUnqualified()) {
+            $useValue = $this->newName->toString();
+        } else {
+            $useValue = $this->newName->slice(0, count($this->newName->parts) - 1)->toString();
+        }
+
+        $this->code->addModification($pos, '', "\nuse {$useValue};\n");
+        $this->stmtUseModified = true;
     }
 }

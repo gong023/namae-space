@@ -4,6 +4,6 @@ function sample()
 {
     try {
         echo 'hi';
-    } catch (\Replaced $e) {
+    } catch (Replaced $e) {
     }
 }

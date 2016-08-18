@@ -37,7 +37,7 @@ class ReplaceProc
         $this->replaceVisitor = $replaceVisitor;
     }
 
-    public function replace($rawCode)
+    public function traverse($rawCode)
     {
         // TODO:fix MutableString not to instantiate here
         $code = new MutableString($rawCode);
@@ -51,7 +51,7 @@ class ReplaceProc
     public static function create(Name $originName, Name $newName)
     {
         // TODO: move to the other file except adding ReplaceVisitor
-        $lexer = new Lexer(['usedAttributes' => ['startFilePos']]);
+        $lexer = new Lexer(['usedAttributes' => ['startFilePos', 'endFilePos']]);
         $parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP5, $lexer);
         $traverser = new NodeTraverser();
         $traverser->addVisitor(new NameResolver());

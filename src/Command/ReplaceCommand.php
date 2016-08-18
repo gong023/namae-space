@@ -109,16 +109,15 @@ class ReplaceCommand extends Command
             $search,
             function ($basePath, \SplFileInfo $fileInfo) use ($replacer, $differ, $input, $output) {
                 try {
-                    $code = $replacer->replace(file_get_contents($fileInfo->getRealPath()));
-                    $replacedCode = $code->getModified();
+                    $code = $replacer->traverse(file_get_contents($fileInfo->getRealPath()));
                 } catch (\PhpParser\Error $e) {
                     throw new \RuntimeException("<{$fileInfo->getFilename()}> {$e->getMessage()}");
                 }
 
                 if ($input->getOption('dry_run')) {
-                    if ($code->getOrigin() !== $replacedCode) {
+                    if ($code->hasModification()) {
                         $output->writeln('<info>' . $fileInfo->getFilename() . '</info>');
-                        $output->writeln($differ->diff($code->getOrigin(), $replacedCode));
+                        $output->writeln($differ->diff($code->getOrigin(), $code->getModified()));
                     }
                     return;
                 }
@@ -127,11 +126,11 @@ class ReplaceCommand extends Command
                     ReplaceVisitor::$targetClass = false;
                     $outputFilePath = "$basePath/{$input->getOption('replace_dir')}/{$this->originNameSpace->getLast()}.php";
                     @mkdir("$basePath/{$input->getOption('replace_dir')}", 0777, true);
-                    file_put_contents($outputFilePath, $replacedCode);
+                    file_put_contents($outputFilePath, $code->getModified());
                     @unlink($fileInfo->getRealPath());
                     @rmdir($fileInfo->getPath());
-                } else {
-                    file_put_contents($fileInfo->getRealPath(), $replacedCode);
+                } elseif ($code->hasModification()) {
+                    file_put_contents($fileInfo->getRealPath(), $code->getModified());
                 }
             }
         );

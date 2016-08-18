@@ -17,7 +17,7 @@ class ReplaceProcTest extends \PHPUnit_Framework_TestCase
     {
         list($expected, $origin) = loadFixture($file);
         $replaceProc = ReplaceProc::create(new Name($originName), new Name($newName));
-        $code = $replaceProc->replace($origin);
+        $code = $replaceProc->traverse($origin);
         ReplaceVisitor::$targetClass = false;
 
         $this->assertSame($origin, $code->getOrigin(), $file);
@@ -51,6 +51,7 @@ class ReplaceProcTest extends \PHPUnit_Framework_TestCase
             ['StmtClassGlobal', 'Origin', 'A\\B\\Replaced'],
             ['StmtInterfaceTarget', 'A\\B\\Origin', 'A\\XXX\\Replaced'],
             ['StmtTraitTarget', 'A\\B\\Origin', 'A\\XXX\\Replaced'],
+            ['StmtClassAddUse', 'Origin', 'A\\B\\Replaced'],
             ['Integration', 'A\\B\\Origin', 'A\\B\\Replaced'],
         ];
     }

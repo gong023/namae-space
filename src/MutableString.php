@@ -34,6 +34,11 @@ class MutableString
         return $this;
     }
 
+    public function hasModification()
+    {
+        return count($this->modifications) > 0;
+    }
+
     public function getModified()
     {
         // Sort by position

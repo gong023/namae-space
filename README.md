@@ -6,7 +6,7 @@ NamaeSpace is util command for PHP namespace. For now, you can replace namespace
 ## Installation
 
 ```
-composer global require gong023/namae-space
+composer global require gong023/namae-space:dev-master
 ```
 
 Please make sure you have `~/.composer/vendor/bin` in your `PATH`.
@@ -67,7 +67,7 @@ NamaeSpace finds paths by reading composer.json and analysis codes.
 
 Mainly analyzing is delegated to https://github.com/nikic/PHP-Parser/. So you don't have to worry about instability of regex.
 
-## Infomation
+## Information
 
 - Do not forget testing by yourself. NamaeSpace is still beta.
 - Multi processing analyzing and `namaespace find` are coming soon.  

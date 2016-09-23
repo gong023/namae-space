@@ -1,13 +1,26 @@
-language: php
 sudo: false
-php:
-- 5.4
-- 5.5
-- 5.6
+language: php
+cache:
+  directories:
+  - $HOME/.composer/cache
+  - vendor
+matrix:
+  fast_finish: true
+  include:
+  - php: 5.5
+  - php: 5.6
+    env:
+    - EXECUTE_DEPLOYMENT=true
+  - php: 7
+before_install:
+- openssl aes-256-cbc -K $encrypted_7d199ed20b74_key -iv $encrypted_7d199ed20b74_iv
+  -in .travis/secrets.tar.enc -out .travis/secrets.tar -d
+- composer self-update
+install:
+- travis_retry composer install --no-interaction
+- composer info -i
 script:
-- ./vendor/bin/phpunit --coverage-text
-before_script:
-- mkdir -p build/logs
-- composer install
-after_script:
-- php vendor/bin/coveralls -v
+- ./vendor/bin/phpunit
+after_success:
+- if [[ $EXECUTE_DEPLOYMENT == 'true' && $TRAVIS_BRANCH == 'master' && $TRAVIS_PULL_REQUEST == 'false' ]]; then composer install --no-dev ; fi
+- if [[ $EXECUTE_DEPLOYMENT == 'true' && $TRAVIS_BRANCH == 'master' && $TRAVIS_PULL_REQUEST == 'false' ]]; then ./deploy.sh ; fi

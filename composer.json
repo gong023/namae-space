@@ -27,5 +27,5 @@
             "NamaeSpace\\": "tests/NamaeSpace"
         }
     },
-    "bin" : ["namaespace"]
+    "bin" : ["bin/namaespace"]
 }

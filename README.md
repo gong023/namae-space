@@ -1,6 +1,8 @@
 NamaeSpace
 ==========
 
+[![Build Status](https://travis-ci.org/gong023/namae-space.svg?branch=master)](https://travis-ci.org/gong023/namae-space)
+
 NamaeSpace is util command for PHP namespace. For now, you can replace namespace by static analysis.
 
 ## Installation

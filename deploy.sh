@@ -12,7 +12,7 @@ git config --global user.email "gon.gong.gone@gmail.com"
 git config --global user.name "gong023"
 
 # Add SSH-based remote to GitHub repo:
-git remote add deploy git@github.com:weierophinney/component-installer.git
+git remote add deploy git@github.com:gong023/namae-space.git
 git fetch deploy
 
 # Get box and build PHAR
@@ -24,13 +24,13 @@ chmod 755 box.phar
 ./box.phar build -vv
 # Without the following step, we cannot checkout the gh-pages branch due to
 # file conflicts:
-mv component-installer.phar component-installer.phar.tmp
+mv namaespace.phar namaespace.phar.tmp
 
 # Checkout gh-pages and add PHAR file and version:
 git checkout -b gh-pages deploy/gh-pages
-mv component-installer.phar.tmp component-installer.phar
-sha1sum component-installer.phar > component-installer.phar.version
-git add component-installer.phar component-installer.phar.version
+mv namaespace.phar.tmp namaespace.phar
+sha1sum namaespace.phar > namaespace.phar.version
+git add namaespace.phar namaespace.phar.version
 
 # Commit and push:
 git commit -m 'Rebuilt phar'

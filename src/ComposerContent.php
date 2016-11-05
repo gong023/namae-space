@@ -32,7 +32,7 @@ class ComposerContent
         $dirsToReplace = [];
         $matchLength = 0;
         for ($i = 1; $i < count($nameSpace->parts); $i++) {
-            $key = $this->joinToString('_', $nameSpace->parts, $i);
+            $key = joinToString('_', $nameSpace->parts, $i);
             $r = array_merge(
                 (array)$this->content->autoload->psr_4->{$key},
                 (array)$this->content->autoload->psr_0->{$key},
@@ -46,7 +46,7 @@ class ComposerContent
                     array_shift($parts);
                     $path = preg_replace('/\/$/', '', $path);
 
-                    return $path . '/' . $this->joinToString('/', $parts, count($parts) - 1);
+                    return $path . '/' . joinToString('/', $parts, count($parts) - 1);
                 }, array_values($r));
                 $matchLength = $c;
             }
@@ -79,16 +79,16 @@ class ComposerContent
     public function getPsr0Dirs()
     {
         return array_merge(
-            $this->arrayFlatten((array)$this->content->autoload->psr_0),
-            $this->arrayFlatten((array)$this->content->autoload_dev->psr_0)
+            arrayFlatten((array)$this->content->autoload->psr_0),
+            arrayFlatten((array)$this->content->autoload_dev->psr_0)
         );
     }
 
     public function getPsr4Dirs()
     {
         return array_merge(
-            $this->arrayFlatten((array)$this->content->autoload->psr_4),
-            $this->arrayFlatten((array)$this->content->autoload_dev->psr_4)
+            arrayFlatten((array)$this->content->autoload->psr_4),
+            arrayFlatten((array)$this->content->autoload_dev->psr_4)
         );
     }
 
@@ -103,27 +103,6 @@ class ComposerContent
         );
 
         return array_unique($paths);
-    }
-
-    private function joinToString($glue, $pieces, $length)
-    {
-        $str = '';
-        for ($i = 0; $i < $length; $i++) {
-            $str .= $pieces[$i] . $glue;
-        }
-
-        return $str;
-    }
-
-    private function arrayFlatten(array $array)
-    {
-        $values = [];
-        $iterator = new \RecursiveIteratorIterator(new \RecursiveArrayIterator($array));
-        foreach ($iterator as $value) {
-            $values[] = $value;
-        }
-
-        return $values;
     }
 
     public static function validateExists($input)

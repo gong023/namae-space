@@ -2,9 +2,18 @@
 
 namespace NamaeSpace;
 
+use NamaeSpace\Visitor\ReplaceVisitor;
+use PhpParser\Lexer;
+use PhpParser\Node\Name;
+use PhpParser\NodeTraverser;
+use PhpParser\NodeVisitor\NameResolver;
+use PhpParser\NodeVisitorAbstract;
+use PhpParser\Parser;
+use PhpParser\ParserFactory;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 function joinToString($glue, $pieces, $length)
 {
@@ -46,4 +55,43 @@ function applyToEachFile($basePath, array $targetPaths, callable $proc)
             }
         }
     }
+}
+
+function writeln($string)
+{
+    /** @var ConsoleOutput $consoleOutput */
+    static $consoleOutput;
+    if ($consoleOutput === null) {
+        $consoleOutput = new ConsoleOutput();
+    }
+    $consoleOutput->writeln($string);
+}
+
+/**
+ * @param $rawCode
+ * @param Name $originName
+ * @param Name $newName
+ * @return MutableString
+ */
+function traverseToReplace($rawCode, Name $originName, Name $newName)
+{
+    $code = new MutableString($rawCode);
+
+    $traverser = new NodeTraverser();
+    $traverser->addVisitor(new NameResolver());
+    $visitor = new ReplaceVisitor($originName, $newName, $code);
+    $traverser->addVisitor($visitor);
+
+    $stmts = \NamaeSpace\createParser()->parse($rawCode);
+    $traverser->traverse($stmts);
+
+    return $code;
+}
+
+function createParser()
+{
+    $lexer = new Lexer(['usedAttributes' => ['startFilePos']]);
+    $parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP5, $lexer);
+
+    return $parser;
 }

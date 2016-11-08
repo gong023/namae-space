@@ -35,17 +35,11 @@ class ReplaceVisitor extends NodeVisitorAbstract
      */
     private $code;
 
-    public function __construct(Name $originName, Name $newName)
+    public function __construct(Name $originName, Name $newName, MutableString $code)
     {
         $this->originName = $originName;
         $this->newName = $newName;
-    }
-
-    public function setCode(MutableString $code)
-    {
         $this->code = $code;
-
-        return $this;
     }
 
     public function beforeTraverse(array $nodes)

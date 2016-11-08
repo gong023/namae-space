@@ -7,7 +7,6 @@ use PhpParser\Lexer;
 use PhpParser\Node\Name;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
-use PhpParser\NodeVisitorAbstract;
 use PhpParser\Parser;
 use PhpParser\ParserFactory;
 use RecursiveDirectoryIterator;
@@ -68,14 +67,16 @@ function writeln($string)
 }
 
 /**
- * @param $rawCode
- * @param Name $originName
- * @param Name $newName
- * @return MutableString
+ * @param string $rawCode
+ * @param string $rawOriginName
+ * @param string $rawNewName
+ * @return \NamaeSpace\MutableString
  */
-function traverseToReplace($rawCode, Name $originName, Name $newName)
+function traverseToReplace($rawCode, $rawOriginName, $rawNewName)
 {
     $code = new MutableString($rawCode);
+    $originName = new Name($rawOriginName);
+    $newName = new Name($rawNewName);
 
     $traverser = new NodeTraverser();
     $traverser->addVisitor(new NameResolver());

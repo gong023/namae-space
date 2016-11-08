@@ -6,27 +6,20 @@ use NamaeSpace\MutableString;
 use NamaeSpace\Visitor\ReplaceVisitor;
 use PhpParser\Node\Name;
 use React\EventLoop\LoopInterface;
-use SebastianBergmann\Diff\Differ;
 use WyriHaximus\React\ChildProcess\Messenger\ChildInterface;
 use WyriHaximus\React\ChildProcess\Messenger\Messages\Payload;
 use WyriHaximus\React\ChildProcess\Messenger\Messenger;
 
-class DryRun implements ChildInterface
+class Overwrite implements  ChildInterface
 {
     /**
      * @var Payload
      */
     private $payload;
 
-    /**
-     * @var Differ
-     */
-    private $differ;
-
-    private function __construct(Payload $payload, Differ $differ)
+    public function __construct(Payload $payload)
     {
         $this->payload = $payload;
-        $this->differ = $differ;
     }
 
     public function process()
@@ -38,24 +31,30 @@ class DryRun implements ChildInterface
             $this->payload['new_name']
         );
 
-        if ($code->hasModification()) {
-            \NamaeSpace\writeln('<info>' . $this->payload['filename'] . '</info>');
-            \NamaeSpace\writeln($this->differ->diff($code->getOrigin(), $code->getModified()));
+        if (ReplaceVisitor::$targetClass) {
+            ReplaceVisitor::$targetClass = false;
+            $fileDir = $this->payload['base_path'] . '/' . $this->payload['replace_dir'];
+            $newName = new Name($this->payload['new_name']);
+            $outputFilePath = "$fileDir/{$newName->getLast()}.php";
+            @mkdir($fileDir, 0755, true);
+            file_put_contents($outputFilePath, $code->getModified());
+            @unlink($this->payload['real_path']);
+            @rmdir($this->payload['path']); // $fileInfo->getPath()
+        } else {
+            file_put_contents($this->payload['real_path'], $code->getModified());
         }
-        ReplaceVisitor::$targetClass = false;
     }
 
     /**
      * @param Messenger $messenger
      * @param LoopInterface $loop
+     * @return void
      */
     public static function create(Messenger $messenger, LoopInterface $loop)
     {
         $messenger->registerRpc('return', function (Payload $payload) {
-            $differ = new Differ("--- Original\n+++ New\n", false);
-
             try {
-                (new self($payload, $differ))->process();
+                (new self($payload))->process();
                 return \React\Promise\resolve();
             } catch (\Exception $e) {
                 return \React\Promise\reject([

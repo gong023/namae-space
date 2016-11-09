@@ -42,7 +42,6 @@ class DryRun implements ChildInterface
             \NamaeSpace\writeln('<info>' . $this->payload['filename'] . '</info>');
             \NamaeSpace\writeln($this->differ->diff($code->getOrigin(), $code->getModified()));
         }
-        ReplaceVisitor::$targetClass = false;
     }
 
     /**

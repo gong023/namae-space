@@ -67,14 +67,14 @@ function writeln($string)
 }
 
 /**
- * @param string $rawCode
+ * @param string $filePath
  * @param string $rawOriginName
  * @param string $rawNewName
- * @return \NamaeSpace\MutableString
+ * @return \NamaeSpace\ReplacedCode
  */
-function traverseToReplace($rawCode, $rawOriginName, $rawNewName)
+function traverseToReplace($filePath, $rawOriginName, $rawNewName)
 {
-    $code = new MutableString($rawCode);
+    $code = ReplacedCode::create($filePath);
     $originName = new Name($rawOriginName);
     $newName = new Name($rawNewName);
 
@@ -83,11 +83,28 @@ function traverseToReplace($rawCode, $rawOriginName, $rawNewName)
     $visitor = new ReplaceVisitor($originName, $newName, $code);
     $traverser->addVisitor($visitor);
 
-    $stmts = \NamaeSpace\createParser()->parse($rawCode);
+    $stmts = \NamaeSpace\createParser()->parse($code->getOrigin());
     $traverser->traverse($stmts);
 
     return $code;
 }
+
+//function getMutableStringToReplace($rawCodeString, $rawOriginName, $rawNewName)
+//{
+//    $code = new MutableString($rawCodeString);
+//    $originName = new Name($rawOriginName);
+//    $newName = new Name($rawNewName);
+//
+//    $traverser = new NodeTraverser();
+//    $traverser->addVisitor(new NameResolver());
+//    $visitor = new ReplaceVisitor($originName, $newName, $code);
+//    $traverser->addVisitor($visitor);
+//
+//    $stmts = \NamaeSpace\createParser()->parse($code->getOrigin());
+//    $traverser->traverse($stmts);
+//
+//    return $code;
+//}
 
 function createParser()
 {

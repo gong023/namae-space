@@ -3,6 +3,7 @@
 namespace NamaeSpace\Visitor;
 
 use NamaeSpace\MutableString;
+use NamaeSpace\ReplacedCode;
 use PhpParser\Node;
 use PhpParser\Node\Name;
 use PhpParser\NodeVisitorAbstract;
@@ -11,15 +12,6 @@ use PhpParser\Node\Expr;
 
 class ReplaceVisitor extends NodeVisitorAbstract
 {
-    public static $targetClass = false;
-
-    // ugly properties to add use stmt
-    private $named = false;
-    private $stmtUseModified = false;
-    private $stmtNameSpacePosEnd;
-    private $stmtClassLikePosStart;
-    private $stmtUsesPosStart;
-
     /**
      * @var Name
      */
@@ -35,7 +27,7 @@ class ReplaceVisitor extends NodeVisitorAbstract
      */
     private $code;
 
-    public function __construct(Name $originName, Name $newName, MutableString $code)
+    public function __construct(Name $originName, Name $newName, ReplacedCode $code)
     {
         $this->originName = $originName;
         $this->newName = $newName;
@@ -44,18 +36,18 @@ class ReplaceVisitor extends NodeVisitorAbstract
 
     public function beforeTraverse(array $nodes)
     {
-        $this->named = $this->stmtUseModified = false;
-        $this->stmtNameSpacePosEnd = $this->stmtClassLikePosStart = $this->stmtUsesPosStart = null;
+        $this->code->named = $this->code->stmtUseModified = false;
+        $this->code->stmtNameSpacePosEnd = $this->code->stmtClassLikePosStart = $this->code->stmtUsesPosStart = null;
     }
 
     public function leaveNode(Node $node)
     {
         if ($node instanceof Stmt\Class_) {
             if (isset($node->namespacedName)) {
-                $this->stmtClassLikePosStart = $node->getAttribute('startFilePos') - 1;
+                $this->code->stmtClassLikePosStart = $node->getAttribute('startFilePos') - 1;
             }
             if (isset($node->namespacedName) && $node->namespacedName->toString() === $this->originName->toString()) {
-                static::$targetClass = true;
+                $this->code->isTargetClass = true;
                 $this->code->addModification(
                     $node->getAttribute('startFilePos'),
                     'class ' . $node->namespacedName->getLast(),
@@ -70,10 +62,10 @@ class ReplaceVisitor extends NodeVisitorAbstract
             }
         } elseif ($node instanceof Stmt\Interface_) {
             if (isset($node->namespacedName)) {
-                $this->stmtClassLikePosStart = $node->getAttribute('startFilePos') - 1;
+                $this->code->stmtClassLikePosStart = $node->getAttribute('startFilePos') - 1;
             }
             if (isset($node->namespacedName) && $node->namespacedName->toString() === $this->originName->toString()) {
-                static::$targetClass = true;
+                $this->code->isTargetClass = true;
                 $this->code->addModification(
                     $node->getAttribute('startFilePos'),
                     'interface ' . $node->namespacedName->getLast(),
@@ -86,10 +78,10 @@ class ReplaceVisitor extends NodeVisitorAbstract
             }
         } elseif ($node instanceof Stmt\Trait_) {
             if (isset($node->namespacedName)) {
-                $this->stmtClassLikePosStart = $node->getAttribute('startFilePos') - 1;
+                $this->code->stmtClassLikePosStart = $node->getAttribute('startFilePos') - 1;
             }
             if (isset($node->namespacedName) && $node->namespacedName->toString() === $this->originName->toString()) {
-                static::$targetClass = true;
+                $this->code->isTargetClass = true;
                 $this->code->addModification(
                     $node->getAttribute('startFilePos'),
                     'trait ' . $node->namespacedName->getLast(),
@@ -101,7 +93,7 @@ class ReplaceVisitor extends NodeVisitorAbstract
                 if (!$use->name instanceof Name || $use->name->toString() !== $this->originName->toString()) {
                     continue;
                 }
-                $this->stmtUseModified = true;
+                $this->code->stmtUseModified = true;
                 $this->code->addModification(
                     $use->name->getAttribute('startFilePos'),
                     $use->name->toString(),
@@ -109,7 +101,7 @@ class ReplaceVisitor extends NodeVisitorAbstract
                 );
             }
             if ($node->uses[0] instanceof Name) {
-                $this->stmtUsesPosStart = $node->uses[0]->getAttribute('startFilePos') - 1;
+                $this->code->stmtUsesPosStart = $node->uses[0]->getAttribute('startFilePos') - 1;
             }
         } elseif ($node instanceof Expr\FuncCall && $node->name instanceof Name && $node->name->isFullyQualified()) {
             /** @var Name $funcNameSpace */
@@ -139,12 +131,12 @@ class ReplaceVisitor extends NodeVisitorAbstract
         }
 
         if ($node instanceof Stmt\Namespace_ && $node->name instanceof Name) {
-            $this->stmtNameSpacePosEnd = $node->name->getAttribute('startFilePos') + strlen($node->name->toString() . ";\n");
-            if (static::$targetClass) {
+            $this->code->stmtNameSpacePosEnd = $node->name->getAttribute('startFilePos') + strlen($node->name->toString() . ";\n");
+            if ($this->code->isTargetClass) {
                 $removed = $node->name->toString();
                 $inserted = $this->newName->slice(0, count($this->newName->parts) - 1)->toString();
                 $this->code->addModification($node->name->getAttribute('startFilePos'), $removed, $inserted);
-                $this->named = true;
+                $this->code->named = true;
             }
         }
 
@@ -159,25 +151,17 @@ class ReplaceVisitor extends NodeVisitorAbstract
      */
     public function afterTraverse(array $nodes)
     {
-        if (static::$targetClass && !$this->named) {
+        if ($this->code->isTargetClass && !$this->code->named) {
             $inserted = "\nnamespace " . $this->newName->slice(0, count($this->newName->parts) - 1)->toString() . ";\n";
             $this->code->addModification(strlen("<?php\n"), '', $inserted);
-            $this->named = true;
+            $this->code->named = true;
         }
 
-        if (!static::$targetClass
-            && !$this->stmtUseModified
+        if (!$this->code->isTargetClass
+            && !$this->code->stmtUseModified
             && $this->code->hasModification()
         ) {
-            if ($this->stmtNameSpacePosEnd) {
-                $this->addUseStmt($this->stmtNameSpacePosEnd);
-            } elseif ($this->stmtClassLikePosStart) {
-                $this->addUseStmt($this->stmtClassLikePosStart);
-            } elseif ($this->stmtUsesPosStart) {
-                $this->addUseStmt($this->stmtUsesPosStart);
-            } else {
-                $this->addUseStmt(strlen("<?php\n"));
-            }
+            $this->addUseStmt($this->code->getPosToAddUseStmt());
         }
 
         return null;
@@ -214,15 +198,15 @@ class ReplaceVisitor extends NodeVisitorAbstract
 
     private function addUseStmt($pos)
     {
-        if ($this->stmtNameSpacePosEnd === null
+        if ($this->code->stmtNameSpacePosEnd === null
             && $this->originName->isUnqualified()
             && $this->newName->isUnqualified()
         ) {
-            $this->stmtUseModified = true;
+            $this->code->stmtUseModified = true;
             return;
         }
 
         $this->code->addModification($pos, '', "\nuse {$this->newName->toString()};\n");
-        $this->stmtUseModified = true;
+        $this->code->stmtUseModified = true;
     }
 }

@@ -2,8 +2,6 @@
 
 namespace NamaeSpace\ChildProcess\Replace;
 
-use NamaeSpace\MutableString;
-use NamaeSpace\Visitor\ReplaceVisitor;
 use PhpParser\Node\Name;
 use React\EventLoop\LoopInterface;
 use WyriHaximus\React\ChildProcess\Messenger\ChildInterface;
@@ -24,15 +22,14 @@ class Overwrite implements  ChildInterface
 
     public function process()
     {
-        /** @var MutableString $code */
+        /** @var \NamaeSpace\ReplacedCode $code */
         $code = \NamaeSpace\traverseToReplace(
             file_get_contents($this->payload['real_path']),
             $this->payload['origin_name'],
             $this->payload['new_name']
         );
 
-        if (ReplaceVisitor::$targetClass) {
-            ReplaceVisitor::$targetClass = false;
+        if ($code->isTargetClass) {
             $fileDir = $this->payload['base_path'] . '/' . $this->payload['replace_dir'];
             $newName = new Name($this->payload['new_name']);
             $outputFilePath = "$fileDir/{$newName->getLast()}.php";

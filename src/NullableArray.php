@@ -2,22 +2,40 @@
 
 namespace NamaeSpace;
 
-class NullableArray
+final class NullableArray implements \ArrayAccess
 {
-    public function __construct(array $origin)
+    public function __construct(array $array = null)
     {
-        foreach ($origin as $key => $value) {
-            $key = str_replace(['-', '\\'], '_', $key);
-            if (is_array($value)) {
-                $this->{$key} = new static($value);
-                continue;
-            }
-            $this->{$key} = $value;
+        if ($array !== null) {
+            $this->container = $array;
         }
     }
 
-    public function __get($name)
+    public function offsetGet($offset)
     {
-        return new NullObject();
+        if (isset($this->container[$offset])) {
+            return $this->container[$offset];
+        }
+
+        return new self();
+    }
+
+    public function offsetExists($offset)
+    {
+        return isset($this->container[$offset]);
+    }
+
+    public function offsetSet($offset, $value)
+    {
+        if ($offset === null) {
+            $this->container[] = $value;
+        } else {
+            $this->container[$offset] = $value;
+        }
+    }
+
+    public function offsetUnset($offset)
+    {
+        unset($this->container[$offset]);
     }
 }

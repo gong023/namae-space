@@ -3,6 +3,7 @@
 namespace NamaeSpace;
 
 use NamaeSpace\Visitor\ReplaceVisitor;
+use PhpParser\Error;
 use PhpParser\Lexer;
 use PhpParser\Node\Name;
 use PhpParser\NodeTraverser;
@@ -84,7 +85,11 @@ function traverseToReplace($filePath, $rawOriginName, $rawNewName)
     $traverser->addVisitor($visitor);
 
     $stmts = \NamaeSpace\createParser()->parse($code->getOrigin());
-    $traverser->traverse($stmts);
+    try {
+        $traverser->traverse($stmts);
+    } catch (Error $e) {
+        throw new \RuntimeException("<$filePath> {$e->getMessage()}");
+    }
 
     return $code;
 }

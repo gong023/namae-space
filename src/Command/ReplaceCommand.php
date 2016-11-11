@@ -3,7 +3,6 @@
 namespace NamaeSpace\Command;
 
 use NamaeSpace\ComposerContent;
-use NamaeSpace\ReplaceProc;
 use NamaeSpace\Visitor\ReplaceVisitor;
 use PhpParser\Lexer;
 use PhpParser\Node\Name;

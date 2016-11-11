@@ -34,10 +34,10 @@ class ComposerContent
         for ($i = 1; $i < count($nameSpace->parts); $i++) {
             $key = joinToString('_', $nameSpace->parts, $i);
             $r = array_merge(
-                (array)$this->content->autoload->psr_4->{$key},
-                (array)$this->content->autoload->psr_0->{$key},
-                (array)$this->content->autoload_dev->psr_4->{$key},
-                (array)$this->content->autoload_dev->psr_0->{$key}
+                (array)$this->content['autoload']['psr-4'][$key],
+                (array)$this->content['autoload']['psr-0'][$key],
+                (array)$this->content['autoload-dev']['psr-4'][$key],
+                (array)$this->content['autoload-dev']['psr-0'][$key]
             );
             $c = count($r);
             if ($c >= $matchLength) {
@@ -58,37 +58,37 @@ class ComposerContent
     public function getClassmapValues()
     {
         return array_merge(
-            array_values((array)$this->content->autoload->classmap),
-            array_values((array)$this->content->autoload_dev->classmap)
+            (array)$this->content['autoload']['classmap'],
+            (array)$this->content['autoload-dev']['classmap']
         );
     }
 
     public function getFilesValues()
     {
         return array_merge(
-            array_values((array)$this->content->autoload->files),
-            array_values((array)$this->content->autoload_dev->files)
+            (array)$this->content['autoload']['files'],
+            (array)$this->content['autoload-dev']['files']
         );
     }
 
     public function getIncludePathDirs()
     {
-        return array_values((array)$this->content->include_path);
+        return (array)$this->content['include-path'];
     }
 
     public function getPsr0Dirs()
     {
         return array_merge(
-            arrayFlatten((array)$this->content->autoload->psr_0),
-            arrayFlatten((array)$this->content->autoload_dev->psr_0)
+            arrayFlatten((array)$this->content['autoload']['psr-0']),
+            arrayFlatten((array)$this->content['autoload-dev']['psr-0'])
         );
     }
 
     public function getPsr4Dirs()
     {
         return array_merge(
-            arrayFlatten((array)$this->content->autoload->psr_4),
-            arrayFlatten((array)$this->content->autoload_dev->psr_4)
+            arrayFlatten((array)$this->content['autoload']['psr-4']),
+            arrayFlatten((array)$this->content['autoload-dev']['psr-4'])
         );
     }
 

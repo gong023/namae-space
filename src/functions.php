@@ -25,6 +25,19 @@ function joinToString($glue, $pieces, $length)
     return $str;
 }
 
+function mergeRecursiveValues(array $array1, array $array2)
+{
+    $merge = [];
+    array_walk_recursive($array1, function ($value) use (&$merge) {
+        $merge[] = $value;
+    });
+    array_walk_recursive($array2, function ($value) use (&$merge) {
+        $merge[] = $value;
+    });
+
+    return $merge;
+}
+
 function arrayFlatten(array $array)
 {
     $values = [];

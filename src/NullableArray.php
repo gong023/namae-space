@@ -14,6 +14,9 @@ final class NullableArray implements \ArrayAccess
     public function offsetGet($offset)
     {
         if (isset($this->container[$offset])) {
+            if (is_array($this->container[$offset])) {
+                return new self($this->container[$offset]);
+            }
             return $this->container[$offset];
         }
 

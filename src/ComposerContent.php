@@ -7,24 +7,13 @@ use PhpParser\Node\Name;
 class ComposerContent
 {
     /**
-     * @var string
-     */
-    private $realDirPath;
-
-    /**
      * @var NullableArray
      */
     private $content;
 
-    public function __construct($realDirPath, NullableArray $content)
+    public function __construct($content)
     {
         $this->content = $content;
-        $this->realDirPath = $realDirPath;
-    }
-
-    public function getReadDirPath()
-    {
-        return $this->realDirPath;
     }
 
     public function getDirsToReplace(Name $nameSpace)
@@ -32,12 +21,12 @@ class ComposerContent
         $dirsToReplace = [];
         $matchLength = 0;
         for ($i = 1; $i < count($nameSpace->parts); $i++) {
-            $key = joinToString('_', $nameSpace->parts, $i);
+            $key = joinToString('\\', $nameSpace->parts, $i);
             $r = array_merge(
-                (array)$this->content['autoload']['psr-4'][$key],
-                (array)$this->content['autoload']['psr-0'][$key],
-                (array)$this->content['autoload-dev']['psr-4'][$key],
-                (array)$this->content['autoload-dev']['psr-0'][$key]
+                arrayFlatten((array)$this->content['autoload']['psr-4'][$key]),
+                arrayFlatten((array)$this->content['autoload']['psr-0'][$key]),
+                arrayFlatten((array)$this->content['autoload-dev']['psr-4'][$key]),
+                arrayFlatten((array)$this->content['autoload-dev']['psr-0'][$key])
             );
             $c = count($r);
             if ($c >= $matchLength) {
@@ -47,7 +36,7 @@ class ComposerContent
                     $path = preg_replace('/\/$/', '', $path);
 
                     return $path . '/' . joinToString('/', $parts, count($parts) - 1);
-                }, array_values($r));
+                }, $r);
                 $matchLength = $c;
             }
         }
@@ -57,7 +46,7 @@ class ComposerContent
 
     public function getClassmapValues()
     {
-        return array_merge(
+        return mergeRecursiveValues(
             (array)$this->content['autoload']['classmap'],
             (array)$this->content['autoload-dev']['classmap']
         );
@@ -65,7 +54,7 @@ class ComposerContent
 
     public function getFilesValues()
     {
-        return array_merge(
+        return mergeRecursiveValues(
             (array)$this->content['autoload']['files'],
             (array)$this->content['autoload-dev']['files']
         );
@@ -73,22 +62,22 @@ class ComposerContent
 
     public function getIncludePathDirs()
     {
-        return (array)$this->content['include-path'];
+        return arrayFlatten((array)$this->content['include-path']);
     }
 
     public function getPsr0Dirs()
     {
-        return array_merge(
-            arrayFlatten((array)$this->content['autoload']['psr-0']),
-            arrayFlatten((array)$this->content['autoload-dev']['psr-0'])
+        return mergeRecursiveValues(
+            (array)$this->content['autoload']['psr-0'],
+            (array)$this->content['autoload-dev']['psr-0']
         );
     }
 
     public function getPsr4Dirs()
     {
-        return array_merge(
-            arrayFlatten((array)$this->content['autoload']['psr-4']),
-            arrayFlatten((array)$this->content['autoload-dev']['psr-4'])
+        return mergeRecursiveValues(
+            (array)$this->content['autoload']['psr-4'],
+            (array)$this->content['autoload-dev']['psr-4']
         );
     }
 
@@ -105,29 +94,45 @@ class ComposerContent
         return array_unique($paths);
     }
 
-    public static function validateExists($input)
+    public static function getRealDir($input = null)
     {
-        if (file_exists($input) && strpos($input, 'composer.json')) {
-            return $input;
-        }
-        $input = preg_replace('/\/$/', '', $input);
-        if (file_exists("$input/composer.json")) {
-            return "$input/composer.json";
+        if ($input === null) {
+            if (file_exists(__DIR__ . '/../composer.json')) {
+                return realpath(__DIR__ . '/../');
+            } else {
+                throw new \RuntimeException('composer_json path is required');
+            }
         }
 
-        throw new \RuntimeException("composer.json doesn't exist in $input");
+        $realPath = realpath($input);
+        if (strpos($realPath, 'composer.json') && file_exists($realPath)) {
+            return str_replace('composer.json', '', $realPath);
+        }
+        if (file_exists("$realPath/composer.json")) {
+            return $realPath;
+        }
+
+        throw new \RuntimeException("composer.json doesn't exist in $realPath");
     }
 
-    public static function instantiate($fileName)
+    public static function instantiate(array $raw)
     {
-        // filename is not validated if filename is specified by -C
-        $fileName = self::validateExists($fileName);
-        $raw = json_decode(file_get_contents($fileName), true);
-        if ($raw === null) {
-            throw new \RuntimeException('failed to parse composer.json: ' . $fileName);
+        if (isset($raw['autoload']) && isset($raw['autoload']['psr-0'])) {
+            $replaced = [];
+            foreach ($raw['autoload']['psr-0'] as $namespace => $dir) {
+                $replaced[str_replace('_', '\\', $namespace)] = $dir;
+            }
+            $raw['autoload']['psr-0'] = $replaced;
         }
-        $realDirPath = dirname(realpath($fileName));
 
-        return new static($realDirPath, new NullableArray($raw));
+        if (isset($raw['autoload-dev']) && isset($raw['autoload-dev']['psr-0'])) {
+            $replaced = [];
+            foreach ($raw['autoload-dev']['psr-0'] as $namespace => $dir) {
+                $replaced[str_replace('_', '\\', $namespace)] = $dir;
+            }
+            $raw['autoload-dev']['psr-0'] = $replaced;
+        }
+
+        return new static(new NullableArray($raw));
     }
 }

@@ -16,12 +16,12 @@ class ComposerContent
         $this->content = $content;
     }
 
-    public function getDirsToReplace(Name $nameSpace)
+    public function getDirsToReplace(array $nameSpaceParts)
     {
         $dirsToReplace = [];
         $matchLength = 0;
-        for ($i = 1; $i < count($nameSpace->parts); $i++) {
-            $key = joinToString('\\', $nameSpace->parts, $i);
+        for ($i = 1; $i < count($nameSpaceParts); $i++) {
+            $key = joinToString('\\', $nameSpaceParts, $i);
             $r = array_merge(
                 arrayFlatten((array)$this->content['autoload']['psr-4'][$key]),
                 arrayFlatten((array)$this->content['autoload']['psr-0'][$key]),
@@ -30,8 +30,8 @@ class ComposerContent
             );
             $c = count($r);
             if ($c >= $matchLength) {
-                $dirsToReplace = array_map(function ($path) use ($nameSpace) {
-                    $parts = $nameSpace->parts;
+                $dirsToReplace = array_map(function ($path) use ($nameSpaceParts) {
+                    $parts = $nameSpaceParts;
                     array_shift($parts);
                     $path = preg_replace('/\/$/', '', $path);
 

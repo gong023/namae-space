@@ -14,22 +14,6 @@ class ReplacedCode extends MutableString
     public $stmtClassLikePosStart;
     public $stmtUsesPosStart;
 
-    /**
-     * @var SplFileInfo
-     */
-    private $fileInfo;
-
-    public function __construct($string, SplFileInfo $fileInfo)
-    {
-        parent::__construct($string);
-        $this->fileInfo = $fileInfo;
-    }
-
-    public function getFileInfo()
-    {
-        return $this->fileInfo;
-    }
-
     public function getPosToAddUseStmt()
     {
         if ($this->stmtNameSpacePosEnd) {
@@ -43,11 +27,10 @@ class ReplacedCode extends MutableString
         return strlen("<?php\n");
     }
 
-    public static function create($filePath)
+    public static function create(SplFileInfo $fileInfo)
     {
-        $info = new SplFileInfo($filePath);
-        $code = file_get_contents($info->getRealPath());
+        $code = file_get_contents($fileInfo->getRealPath());
 
-        return new self($code, $info);
+        return new self($code);
     }
 }

@@ -266,7 +266,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
     public function testGetDirsToReplace($replacedName, $content, $expected)
     {
         $content = ComposerContent::instantiate($content);
-        $dirs = $content->getDirsToReplace(new Name($replacedName));
+        $dirs = $content->getDirsToReplace(explode('\\', $replacedName));
 
         $this->assertSame($expected, $dirs);
     }

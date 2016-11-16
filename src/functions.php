@@ -54,7 +54,7 @@ function applyToEachFile($basePath, array $targetPaths, callable $proc)
     foreach ($targetPaths as $targetPath) {
         $targetPath = $basePath . '/' . $targetPath;
         if (is_file($targetPath) && strpos($targetPath, '.php')) {
-            $proc($basePath, new SplFileInfo($targetPath));
+            $proc(new SplFileInfo($targetPath));
             continue;
         }
         $it = new RecursiveIteratorIterator(
@@ -64,7 +64,7 @@ function applyToEachFile($basePath, array $targetPaths, callable $proc)
         /** @var SplFileInfo $file */
         foreach ($it as $file) {
             if ($file->isFile() && strpos($file->getPathname(), '.php')) {
-                $proc($basePath, $file);
+                $proc($file);
             }
         }
     }
@@ -81,16 +81,14 @@ function writeln($string)
 }
 
 /**
- * @param string $filePath
- * @param string $rawOriginName
- * @param string $rawNewName
+ * @param SplFileInfo $fileInfo
+ * @param Name $originName
+ * @param Name $newName
  * @return \NamaeSpace\ReplacedCode
  */
-function traverseToReplace($filePath, $rawOriginName, $rawNewName)
+function traverseToReplace(SplFileInfo $fileInfo, Name $originName, Name $newName)
 {
-    $code = ReplacedCode::create($filePath);
-    $originName = new Name($rawOriginName);
-    $newName = new Name($rawNewName);
+    $code = ReplacedCode::create($fileInfo);
 
     $traverser = new NodeTraverser();
     $traverser->addVisitor(new NameResolver());
@@ -101,7 +99,7 @@ function traverseToReplace($filePath, $rawOriginName, $rawNewName)
     try {
         $traverser->traverse($stmts);
     } catch (Error $e) {
-        throw new \RuntimeException("<$filePath> {$e->getMessage()}");
+        throw new \RuntimeException("[{$fileInfo->getFilename()}] {$e->getMessage()}");
     }
 
     return $code;

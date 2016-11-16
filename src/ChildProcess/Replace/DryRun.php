@@ -7,6 +7,7 @@ use NamaeSpace\Visitor\ReplaceVisitor;
 use PhpParser\Node\Name;
 use React\EventLoop\LoopInterface;
 use SebastianBergmann\Diff\Differ;
+use SplFileInfo;
 use WyriHaximus\React\ChildProcess\Messenger\ChildInterface;
 use WyriHaximus\React\ChildProcess\Messenger\Messages\Payload;
 use WyriHaximus\React\ChildProcess\Messenger\Messenger;
@@ -14,32 +15,44 @@ use WyriHaximus\React\ChildProcess\Messenger\Messenger;
 class DryRun implements ChildInterface
 {
     /**
-     * @var Payload
-     */
-    private $payload;
-
-    /**
      * @var Differ
      */
     private $differ;
 
-    private function __construct(Payload $payload, Differ $differ)
-    {
-        $this->payload = $payload;
+    /**
+     * @var SplFileInfo
+     */
+    private $fileInfo;
+
+    /**
+     * @var Name
+     */
+    private $originName;
+
+    /**
+     * @var Name
+     */
+    private $newName;
+
+    private function __construct(
+        SplFileInfo $fileInfo,
+        Name $originName,
+        Name $newName,
+        Differ $differ
+    ) {
+        $this->fileInfo = $fileInfo;
+        $this->originName = $originName;
+        $this->newName = $newName;
         $this->differ = $differ;
     }
 
     public function process()
     {
         /** @var MutableString $code */
-        $code = \NamaeSpace\traverseToReplace(
-            file_get_contents($this->payload['real_path']),
-            $this->payload['origin_name'],
-            $this->payload['new_name']
-        );
+        $code = \NamaeSpace\traverseToReplace($this->fileInfo, $this->originName, $this->newName);
 
         if ($code->hasModification()) {
-            \NamaeSpace\writeln('<info>' . $this->payload['filename'] . '</info>');
+            \NamaeSpace\writeln('<info>' . $this->fileInfo->getFilename() . '</info>');
             \NamaeSpace\writeln($this->differ->diff($code->getOrigin(), $code->getModified()));
         }
     }
@@ -51,10 +64,13 @@ class DryRun implements ChildInterface
     public static function create(Messenger $messenger, LoopInterface $loop)
     {
         $messenger->registerRpc('return', function (Payload $payload) {
-            $differ = new Differ("--- Original\n+++ New\n", false);
-
             try {
-                (new self($payload, $differ))->process();
+                $fileInfo = new SplFileInfo($payload['target_real_path']);
+                $originName = new Name($payload['origin_name']);
+                $newName = new Name($payload['new_name']);
+                $differ = new Differ("--- Original\n+++ New\n", false);
+
+                (new self($fileInfo, $originName, $newName, $differ))->process();
                 return \React\Promise\resolve();
             } catch (\Exception $e) {
                 return \React\Promise\reject([

@@ -12,6 +12,8 @@ use PhpParser\Parser;
 use PhpParser\ParserFactory;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+use RecursiveRegexIterator;
+use RegexIterator;
 use SplFileInfo;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
@@ -57,15 +59,16 @@ function applyToEachFile($basePath, array $targetPaths, callable $proc)
             $proc(new SplFileInfo($targetPath));
             continue;
         }
-        $it = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($targetPath),
-            RecursiveIteratorIterator::LEAVES_ONLY
+        $it = new RegexIterator(
+            new RecursiveIteratorIterator(new RecursiveDirectoryIterator($targetPath)),
+            '/^.+\.php$/i'
         );
+        $cnt = iterator_count($it);
+        $i = 0;
         /** @var SplFileInfo $file */
         foreach ($it as $file) {
-            if ($file->isFile() && strpos($file->getPathname(), '.php')) {
-                $proc($file);
-            }
+            $i++;
+            $proc($file, ($i >= $cnt));
         }
     }
 }

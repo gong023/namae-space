@@ -54,6 +54,8 @@ class Overwrite implements  ChildInterface
         } else {
             file_put_contents($this->fileInfo->getRealPath(), $code->getModified());
         }
+
+        return '.';
     }
 
     /**
@@ -69,9 +71,9 @@ class Overwrite implements  ChildInterface
                 $originName = new Name($payload['origin_name']);
                 $newName = new Name($payload['new_name']);
                 $fileDir = $payload['project_dir'] . '/' . $payload['replace_dir'];
+                $stdout = (new self($fileInfo, $originName, $newName, $fileDir))->process();
 
-                (new self($fileInfo, $originName, $newName, $fileDir))->process();
-                return \React\Promise\resolve();
+                return \React\Promise\resolve(['stdout' => $stdout]);
             } catch (\Exception $e) {
                 return \React\Promise\reject([
                     'sent_payload'      => $payload->getPayload(),

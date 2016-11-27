@@ -29,15 +29,21 @@ WIP
 
 ## Installation
 
+### Download built phar
+
+You can download from here: https://github.com/gong023/namae-space/raw/gh-pages/namaespace.phar
+
+Do not forget to move namaespace.phar to your $PATH
+
 ### Incude your project
 
 Alternatively you can install this command in your project.
 
-In this case, you will be able to skip input of comoser.json path.
-
 ```
 composer require --dev gong023/namae-space
 ```
+
+In this case, you will be able to skip input of comoser.json path.
 
 ### Build phar by yourself
 

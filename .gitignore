@@ -10,3 +10,4 @@ namaespace.phar.pubkey
 namaespace.phar.version
 .travis/build-key.pem
 .travis/secrets.tar
+script/

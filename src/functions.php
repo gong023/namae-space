@@ -12,7 +12,6 @@ use PhpParser\Parser;
 use PhpParser\ParserFactory;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
-use RecursiveRegexIterator;
 use RegexIterator;
 use SplFileInfo;
 use Symfony\Component\Console\Output\ConsoleOutput;

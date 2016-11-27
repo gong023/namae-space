@@ -5,6 +5,7 @@ namespace NamaeSpace\Command;
 use NamaeSpace\ChildProcess\Replace\DryRun;
 use NamaeSpace\ChildProcess\Replace\Overwrite;
 use NamaeSpace\ComposerContent;
+use NamaeSpace\StdoutPool;
 use PhpParser\Lexer;
 use PhpParser\Node\Name;
 use React\EventLoop\Factory as EventLoopFactory;
@@ -104,6 +105,7 @@ class ReplaceCommand extends Command
                     $pool->rpc(MessagesFactory::rpc('return', $payload))
                         ->then(function (Payload $payload) use ($isEnd, $pool, $loop, $output) {
                             $output->write($payload['stdout']);
+                            StdoutPool::$stdouts[] = $payload['stdout_pool'];
                             if ($isEnd) {
                                 $pool->terminate(MessagesFactory::message());
                                 $loop->stop();
@@ -117,5 +119,6 @@ class ReplaceCommand extends Command
 
             $loop->run();
         }
+        StdoutPool::dump($output);
     }
 }

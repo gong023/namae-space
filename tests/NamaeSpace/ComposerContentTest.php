@@ -13,7 +13,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
      */
     public function testPsr0Dirs($autoload, $expected)
     {
-        $content = new ComposerContent('basePath', new NullableArray($autoload));
+        $content = ComposerContent::instantiate($autoload);
 
         $this->assertSame($expected, $content->getPsr0Dirs());
     }
@@ -67,7 +67,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
      */
     public function testPsr4Dirs($autoload, $expected)
     {
-        $content = new ComposerContent('basePath', new NullableArray($autoload));
+        $content = ComposerContent::instantiate($autoload);
 
         $this->assertSame($expected, $content->getPsr4Dirs());
     }
@@ -121,7 +121,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
      */
     public function testClassMap($autoload, $expected)
     {
-        $content = new ComposerContent('basePath', new NullableArray($autoload));
+        $content = ComposerContent::instantiate($autoload);
 
         $this->assertSame($expected, $content->getClassmapValues());
     }
@@ -165,7 +165,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
      */
     public function testFiles($autoload, $expected)
     {
-        $content = new ComposerContent('basePath', new NullableArray($autoload));
+        $content = ComposerContent::instantiate($autoload);
 
         $this->assertSame($expected, $content->getFilesValues());
     }
@@ -209,7 +209,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
      */
     public function testIncludePathDirs($includePath, $expected)
     {
-        $content = new ComposerContent('basePath', new NullableArray($includePath));
+        $content = ComposerContent::instantiate($includePath);
 
         $this->assertSame($expected, $content->getIncludePathDirs());
     }
@@ -233,7 +233,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
 
     public function testGetPathAndDirs()
     {
-        $content = new ComposerContent('basePath', new NullableArray([
+        $content = ComposerContent::instantiate([
             'autoload' => [
                 'psr-4' => ['Bar' => 'app/'],
                 'psr-0' => [ 'A\\' => 'src/', 'B\\C\\' => 'src/', 'B_C_' => 'src/' ], // duplicate dir
@@ -243,7 +243,7 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
             'autoload-dev' => [
                 'psr-4' => ['Foo\\Tests' => 'tests/']
             ],
-        ]));
+        ]);
 
         $expected = [
             'app/',
@@ -265,8 +265,8 @@ class ComposerContentTest extends \PHPUnit_Framework_TestCase
      */
     public function testGetDirsToReplace($replacedName, $content, $expected)
     {
-        $content = new ComposerContent('basePath', new NullableArray($content));
-        $dirs = $content->getDirsToReplace(new Name($replacedName));
+        $content = ComposerContent::instantiate($content);
+        $dirs = $content->getDirsToReplace(explode('\\', $replacedName));
 
         $this->assertSame($expected, $dirs);
     }

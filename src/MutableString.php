@@ -4,9 +4,9 @@ namespace NamaeSpace;
 
 class MutableString
 {
-    private $string;
+    protected $string;
     // [[pos, removed, inserted]]
-    private $modifications = [];
+    protected $modifications = [];
 
     /**
      * @param string $string

@@ -21,4 +21,4 @@ else
     php ./composer.phar update --no-dev
 fi
 
-php ./box.phar build && mv namaespace.phar tzdate && ./namaespace
+php ./box.phar build

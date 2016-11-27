@@ -17,7 +17,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ChoiceQuestion;
-use Symfony\Component\Console\Question\Question;
 use WyriHaximus\React\ChildProcess\Messenger\Messages\Payload;
 use WyriHaximus\React\ChildProcess\Pool\Factory\Fixed;
 use WyriHaximus\React\ChildProcess\Pool\PoolInterface;
@@ -56,7 +55,7 @@ class ReplaceCommand extends Command
         }
         $newName = preg_replace('/^\\\/', '', $newNameSpaceOption);
 
-        if ($replaceDir = $input->getOption('replace_dir')) {
+        if (($replaceDir = $input->getOption('replace_dir')) !== null) {
             if (! is_dir($replaceDir)) {
                 throw new \RuntimeException('invalid replace_dir:' . $replaceDir);
             }

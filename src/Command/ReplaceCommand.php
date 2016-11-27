@@ -55,8 +55,7 @@ class ReplaceCommand extends Command
         }
         $newName = preg_replace('/^\\\/', '', $newNameSpaceOption);
 
-        if ($input->getOption('replace_dir')) {
-            $replaceDir = $projectDir . '/' . $input->getOption('replace_dir');
+        if ($replaceDir = $input->getOption('replace_dir')) {
             if (! is_dir($replaceDir)) {
                 throw new \RuntimeException('invalid replace_dir:' . $replaceDir);
             }
@@ -99,19 +98,19 @@ class ReplaceCommand extends Command
 
         foreach ($searchPaths as $searchPath) {
             $targetPath = $projectDir . '/' . $searchPath;
-            $childProcess->then(function (PoolInterface $pool) use ($payload, $targetPath, $loop) {
-                \NamaeSpace\applyToEachFile($targetPath, function (SplFileInfo $fileInfo, $isEnd) use ($pool, $loop, $payload) {
+            $childProcess->then(function (PoolInterface $pool) use ($payload, $targetPath, $loop, $output) {
+                \NamaeSpace\applyToEachFile($targetPath, function (SplFileInfo $fileInfo, $isEnd) use ($pool, $loop, $payload, $output) {
                     $payload['target_real_path'] = $fileInfo->getRealPath();
                     $pool->rpc(MessagesFactory::rpc('return', $payload))
-                        ->then(function (Payload $payload) use ($isEnd, $pool, $loop) {
-                            \NamaeSpace\writeln($payload['stdout']);
+                        ->then(function (Payload $payload) use ($isEnd, $pool, $loop, $output) {
+                            $output->write($payload['stdout']);
                             if ($isEnd) {
                                 $pool->terminate(MessagesFactory::message());
                                 $loop->stop();
                             }
-                        }, function (Payload $payload) {
-                            \NamaeSpace\writeln($payload['exception_class']);
-                            \NamaeSpace\writeln($payload['exception_message']);
+                        }, function (Payload $payload) use ($output) {
+                            $output->writeln($payload['exception_class']);
+                            $output->writeln($payload['exception_message']);
                         });
                 });
             });

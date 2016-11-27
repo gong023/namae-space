@@ -70,16 +70,6 @@ function applyToEachFile($targetPath, callable $proc)
     }
 }
 
-function writeln($string)
-{
-    /** @var ConsoleOutput $consoleOutput */
-    static $consoleOutput;
-    if ($consoleOutput === null) {
-        $consoleOutput = new ConsoleOutput();
-    }
-    $consoleOutput->writeln($string);
-}
-
 /**
  * @param SplFileInfo $fileInfo
  * @param Name $originName

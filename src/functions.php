@@ -51,25 +51,22 @@ function arrayFlatten(array $array)
     return $values;
 }
 
-function applyToEachFile($basePath, array $targetPaths, callable $proc)
+function applyToEachFile($targetPath, callable $proc)
 {
-    foreach ($targetPaths as $targetPath) {
-        $targetPath = $basePath . '/' . $targetPath;
-        if (is_file($targetPath) && strpos($targetPath, '.php')) {
-            $proc(new SplFileInfo($targetPath));
-            continue;
-        }
-        $it = new RegexIterator(
-            new RecursiveIteratorIterator(new RecursiveDirectoryIterator($targetPath)),
-            '/^.+\.php$/i'
-        );
-        $cnt = iterator_count($it);
-        $i = 0;
-        /** @var SplFileInfo $file */
-        foreach ($it as $file) {
-            $i++;
-            $proc($file, ($i >= $cnt));
-        }
+    if (is_file($targetPath) && strpos($targetPath, '.php')) {
+        $proc(new SplFileInfo($targetPath), true);
+        return;
+    }
+    $it = new RegexIterator(
+        new RecursiveIteratorIterator(new RecursiveDirectoryIterator($targetPath)),
+        '/^.+\.php$/i'
+    );
+    $cnt = iterator_count($it);
+    $i = 1;
+    /** @var SplFileInfo $file */
+    foreach ($it as $file) {
+        $proc($file, $i >= $cnt);
+        $i++;
     }
 }
 

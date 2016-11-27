@@ -97,13 +97,11 @@ class ReplaceCommand extends Command
             $childProcess = Fixed::createFromClass(Overwrite::class, $loop, $loopOption);
         }
 
-        $childProcess->then(function (PoolInterface $pool) use ($payload, $searchPaths, $loop) {
-            \NamaeSpace\applyToEachFile(
-                $payload['project_dir'],
-                $searchPaths,
-                function (SplFileInfo $fileInfo, $isEnd) use ($pool, $loop, $payload) {
+        foreach ($searchPaths as $searchPath) {
+            $targetPath = $projectDir . '/' . $searchPath;
+            $childProcess->then(function (PoolInterface $pool) use ($payload, $targetPath, $loop) {
+                \NamaeSpace\applyToEachFile($targetPath, function (SplFileInfo $fileInfo, $isEnd) use ($pool, $loop, $payload) {
                     $payload['target_real_path'] = $fileInfo->getRealPath();
-
                     $pool->rpc(MessagesFactory::rpc('return', $payload))
                         ->then(function (Payload $payload) use ($isEnd, $pool, $loop) {
                             \NamaeSpace\writeln($payload['stdout']);
@@ -112,12 +110,13 @@ class ReplaceCommand extends Command
                                 $loop->stop();
                             }
                         }, function (Payload $payload) {
-                            echo $payload['exception_class'] . "\n";
-                            echo $payload['exception_message'] . "\n";
+                            \NamaeSpace\writeln($payload['exception_class']);
+                            \NamaeSpace\writeln($payload['exception_message']);
                         });
                 });
-        });
+            });
 
-        $loop->run();
+            $loop->run();
+        }
     }
 }

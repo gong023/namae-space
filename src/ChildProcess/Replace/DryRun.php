@@ -51,12 +51,13 @@ class DryRun implements ChildInterface
         /** @var MutableString $code */
         $code = \NamaeSpace\traverseToReplace($this->fileInfo, $this->originName, $this->newName);
 
+        $diff = null;
         if ($code->hasModification()) {
-            return "<info>{$this->fileInfo->getFilename()}</info>\n" .
+            $diff = "<info>{$this->fileInfo->getFilename()}</info>\n" .
                 $this->differ->diff($code->getOrigin(), $code->getModified()) . "\n";
         }
 
-        return null;
+        return ['.', $diff];
     }
 
     /**
@@ -71,9 +72,9 @@ class DryRun implements ChildInterface
                 $originName = new Name($payload['origin_name']);
                 $newName = new Name($payload['new_name']);
                 $differ = new Differ("--- Original\n+++ New\n", false);
-                $stdout = (new self($fileInfo, $originName, $newName, $differ))->process();
+                list($stdout, $stdoutPool) = (new self($fileInfo, $originName, $newName, $differ))->process();
 
-                return \React\Promise\resolve(['stdout' => $stdout, 'stdout_pool' => null]);
+                return \React\Promise\resolve(['stdout' => $stdout, 'stdout_pool' => $stdoutPool]);
             } catch (\Exception $e) {
                 return \React\Promise\reject([
                     'sent_payload'      => $payload->getPayload(),

@@ -82,7 +82,6 @@ class ReplaceCommand extends Command
             (array)$input->getOption('additional_path')
         );
 
-        $loop = EventLoopFactory::create();
         $loopOption = ['min_size' => 1, 'max_size' => $input->getOption('max_process')];
         $payload = [
             'origin_name' => $originName,
@@ -90,13 +89,14 @@ class ReplaceCommand extends Command
             'project_dir' => $projectDir,
             'replace_dir' => $replaceDir,
         ];
-        if ($input->getOption('dry_run')) {
-            $childProcess = Fixed::createFromClass(DryRun::class, $loop, $loopOption);
-        } else {
-            $childProcess = Fixed::createFromClass(Overwrite::class, $loop, $loopOption);
-        }
 
         foreach ($searchPaths as $searchPath) {
+            $loop = EventLoopFactory::create();
+            if ($input->getOption('dry_run')) {
+                $childProcess = Fixed::createFromClass(DryRun::class, $loop, $loopOption);
+            } else {
+                $childProcess = Fixed::createFromClass(Overwrite::class, $loop, $loopOption);
+            }
             $targetPath = $projectDir . '/' . $searchPath;
             $childProcess->then(function (PoolInterface $pool) use ($payload, $targetPath, $loop, $output) {
                 \NamaeSpace\applyToEachFile($targetPath, function (SplFileInfo $fileInfo, $isEnd) use ($pool, $loop, $payload, $output) {

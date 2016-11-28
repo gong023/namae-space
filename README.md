@@ -12,9 +12,9 @@ NamaeSpace is util command for PHP namespace. For now, you can replace namespace
 You can replace php namespace.
 
 ```
-namaespace replace -C /Users/wanna_be_170/Documents/mercari-api \ # path to your project composer.json
-                   -O Origin\\YourOriginClass \                   # Replaced OriginName
-                   -N New\\YourNewClass                           # NewClassName which you want to replace
+namaespace replace -C $HOME/your/project      \ # path to your project composer.json
+                   -O Origin\\YourOriginClass \ # Replaced OriginName
+                   -N New\\YourNewClass         # NewClassName which you want to replace
 ```
 
 namaespace command will read composer.json, find `YourOriginClass`, then replace it to `YourNewClass`.
@@ -63,5 +63,4 @@ Mainly analyzing is delegated to https://github.com/nikic/PHP-Parser/. You don't
 
 ## Information
 
-- Do not forget testing by yourself. NamaeSpace is still beta.
-- Pull requests and reporting issues are welcome.
+- NamaeSpace is still beta. Pull requests and reporting issues are welcome.

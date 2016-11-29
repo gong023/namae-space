@@ -18,7 +18,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ChoiceQuestion;
 use WyriHaximus\React\ChildProcess\Messenger\Messages\Payload;
-use WyriHaximus\React\ChildProcess\Pool\Factory\Fixed;
+use WyriHaximus\React\ChildProcess\Pool\Factory\Flexible;
 use WyriHaximus\React\ChildProcess\Pool\PoolInterface;
 
 class ReplaceCommand extends Command
@@ -33,7 +33,7 @@ class ReplaceCommand extends Command
             ->addOption('origin_namespace', 'O', InputOption::VALUE_REQUIRED)
             ->addOption('new_namespace', 'N', InputOption::VALUE_REQUIRED)
             ->addOption('replace_dir', 'R', InputOption::VALUE_OPTIONAL, 'relative path from project base to put new namespace file. pass this argument if you don\'t wanna be asked')
-            ->addOption('max_process', 'M', InputOption::VALUE_OPTIONAL, 'max num of process', 30)
+            ->addOption('max_process', 'M', InputOption::VALUE_OPTIONAL, 'max num of process', 10)
             ->addOption('dry_run', 'D', InputOption::VALUE_NONE);
     }
 
@@ -93,9 +93,9 @@ class ReplaceCommand extends Command
         foreach ($searchPaths as $searchPath) {
             $loop = EventLoopFactory::create();
             if ($input->getOption('dry_run')) {
-                $childProcess = Fixed::createFromClass(DryRun::class, $loop, $loopOption);
+                $childProcess = Flexible::createFromClass(DryRun::class, $loop, $loopOption);
             } else {
-                $childProcess = Fixed::createFromClass(Overwrite::class, $loop, $loopOption);
+                $childProcess = Flexible::createFromClass(Overwrite::class, $loop, $loopOption);
             }
             $targetPath = $projectDir . '/' . $searchPath;
             $childProcess->then(function (PoolInterface $pool) use ($payload, $targetPath, $loop, $output) {

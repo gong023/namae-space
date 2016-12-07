@@ -9,17 +9,13 @@ use NamaeSpace\StdoutPool;
 use PhpParser\Lexer;
 use PhpParser\Node\Name;
 use React\EventLoop\Factory as EventLoopFactory;
-use WyriHaximus\React\ChildProcess\Messenger\Messages\Factory as MessagesFactory;
-use SplFileInfo;
-use Symfony\Component\Console\Command\Command;
+use NamaeSpace\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ChoiceQuestion;
-use WyriHaximus\React\ChildProcess\Messenger\Messages\Payload;
 use WyriHaximus\React\ChildProcess\Pool\Factory\Flexible;
-use WyriHaximus\React\ChildProcess\Pool\PoolInterface;
 
 class ReplaceCommand extends Command
 {
@@ -98,26 +94,9 @@ class ReplaceCommand extends Command
                 $childProcess = Flexible::createFromClass(Overwrite::class, $loop, $loopOption);
             }
             $targetPath = $projectDir . '/' . $searchPath;
-            $childProcess->then(function (PoolInterface $pool) use ($payload, $targetPath, $loop, $output) {
-                \NamaeSpace\applyToEachFile($targetPath, function (SplFileInfo $fileInfo, $isEnd) use ($pool, $loop, $payload, $output) {
-                    $payload['target_real_path'] = $fileInfo->getRealPath();
-                    $pool->rpc(MessagesFactory::rpc('return', $payload))
-                        ->then(function (Payload $payload) use ($isEnd, $pool, $loop, $output) {
-                            $output->write($payload['stdout']);
-                            StdoutPool::$stdouts[] = $payload['stdout_pool'];
-                            if ($isEnd) {
-                                $pool->terminate(MessagesFactory::message());
-                                $loop->stop();
-                            }
-                        }, function (Payload $payload) use ($output) {
-                            $output->writeln($payload['exception_class']);
-                            $output->writeln($payload['exception_message']);
-                        });
-                });
-            });
-
-            $loop->run();
+            $this->communicateWithChild($loop, $childProcess, $payload, $targetPath);
         }
+
         StdoutPool::dump();
     }
 }

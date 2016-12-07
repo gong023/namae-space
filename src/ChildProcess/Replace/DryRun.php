@@ -50,13 +50,13 @@ class DryRun implements ChildInterface
         /** @var MutableString $code */
         $code = \NamaeSpace\traverseToReplace($this->fileInfo, $this->originName, $this->newName);
 
-        $diff = null;
         if ($code->hasModification()) {
-            $diff = "<info>{$this->fileInfo->getFilename()}</info>\n" .
-                $this->differ->diff($code->getOrigin(), $code->getModified()) . "\n";
+            $diff = "<info>{$this->fileInfo->getFilename()}</info>\n"
+                . $this->differ->diff($code->getOrigin(), $code->getModified()) . "\n";
+            return ['!', $diff];
         }
 
-        return ['.', $diff];
+        return ['.', null];
     }
 
     /**

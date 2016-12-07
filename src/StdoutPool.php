@@ -2,8 +2,6 @@
 
 namespace NamaeSpace;
 
-use Symfony\Component\Console\Output\OutputInterface;
-
 class StdoutPool
 {
     public static $stdouts = [];

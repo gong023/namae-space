@@ -70,7 +70,7 @@ class Overwrite implements  ChildInterface
         $diff = "<info>{$this->fileInfo->getFilename()}</info>\n" .
             $this->differ->diff($code->getOrigin(), $modified);
 
-        return ['M', $diff];
+        return ['!', $diff];
     }
 
     /**

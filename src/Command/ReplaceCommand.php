@@ -29,11 +29,11 @@ class ReplaceCommand extends Command
             ->setName('replace')
             ->setDescription('replace namespace')
             ->addOption('composer_json', 'C', InputOption::VALUE_REQUIRED, 'path for composer.json')
-            ->addOption('additional_path', 'A', InputOption::VALUE_OPTIONAL, 'additional path to search. must be relative from project base path')
+            ->addOption('additional_path', 'A', InputOption::VALUE_REQUIRED, 'additional path to search. must be relative from project base path')
             ->addOption('origin_namespace', 'O', InputOption::VALUE_REQUIRED)
             ->addOption('new_namespace', 'N', InputOption::VALUE_REQUIRED)
-            ->addOption('replace_dir', 'R', InputOption::VALUE_OPTIONAL, 'relative path from project base to put new namespace file. pass this argument if you don\'t wanna be asked')
-            ->addOption('max_process', 'M', InputOption::VALUE_OPTIONAL, 'max num of process', 10)
+            ->addOption('replace_dir', 'R', InputOption::VALUE_REQUIRED, 'relative path from project base to put new namespace file. pass this argument if you don\'t wanna be asked')
+            ->addOption('max_process', 'M', InputOption::VALUE_REQUIRED, 'max num of process', 10)
             ->addOption('dry_run', 'D', InputOption::VALUE_NONE);
     }
 

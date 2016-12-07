@@ -63,7 +63,7 @@ class Overwrite implements  ChildInterface
             @mkdir($this->fileDir, 0755, true);
             file_put_contents($outputFilePath, $modified);
             @unlink($this->fileInfo->getRealPath());
-            @rmdir($this->fileInfo->getPath()); // $fileInfo->getPath()
+            @rmdir($this->fileInfo->getPath());
         } else {
             file_put_contents($this->fileInfo->getRealPath(), $modified);
         }

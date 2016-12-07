@@ -2,101 +2,55 @@
 
 namespace NamaeSpace\Command;
 
-use NamaeSpace\Command\Argument\FindArgument;
-use NamaeSpace\Visitor\FindVisitor;
-use PhpParser\Node\Name;
-use PhpParser\NodeTraverser;
-use PhpParser\Parser;
-use Symfony\Component\Console\Command\Command;
+use NamaeSpace\ChildProcess\Find;
+use NamaeSpace\ComposerContent;
+use NamaeSpace\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use React\EventLoop\Factory as EventLoopFactory;
+use WyriHaximus\React\ChildProcess\Pool\Factory\Flexible;
 
-/**
- * less function call and instantiate
- */
 class FindCommand extends Command
 {
-    /**
-     * @var FindArgument
-     */
-    private $argument;
-
-    /**
-     * @var Parser
-     */
-    protected $parser;
-
-    /**
-     * @var NodeTraverser
-     */
-    protected $traverser;
-
-    public function __construct(
-        Parser $parser,
-        NodeTraverser $traverser
-    ) {
-        $this->parser = $parser;
-        $this->traverser = $traverser;
-        parent::__construct();
-    }
-
     protected function configure()
     {
-        $this->setName('find')
-            ->setDescription('find namespace in path')
-            ->addOption('interaction', 'I', InputOption::VALUE_NONE)
-            ->addOption('find_path', 'F', InputOption::VALUE_OPTIONAL)
-            ->addOption('exclude_path', 'E', InputOption::VALUE_OPTIONAL)
-            ->addOption('find_name_space', 'N', InputOption::VALUE_OPTIONAL);
+        $this
+            ->setName('find')
+            ->setDescription('find namespace')
+            ->addOption('composer_json', 'C', InputOption::VALUE_REQUIRED, 'path for composer.json')
+            ->addOption('find_namespace', 'F', InputOption::VALUE_REQUIRED)
+            ->addOption('additional_path', 'A', InputOption::VALUE_REQUIRED, 'additional path to search. must be relative from project base path')
+            ->addOption('max_process', 'M', InputOption::VALUE_REQUIRED, 'max num of process', 10);
     }
 
-    protected function initialize(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $excludePath = ($input->getOption('exclude_path')) ? $input->getOption('exclude_path') : 'vendor';
-        $this->argument = new FindArgument([
-            'find_path'       => $input->getOption('find_path'),
-            'find_name_space' => $input->getOption('find_name_space'),
-            'exclude_path'    => $excludePath,
-        ]);
-    }
-
-    protected function interact(InputInterface $input, OutputInterface $output)
-    {
-        if ($input->getOption('interaction')) {
-            $this->argument
-                ->setHelper($this->getHelper('question'), $input, $output)
-                ->ask('find_path')
-                ->ask('find_name_space')
-                ->ask('exclude_path');
+        if (($composerJsonPath = $input->getOption('composer_json')) === null) {
+            throw new \RuntimeException('-C:--composer_json is required');
         }
-    }
+        $projectDir = ComposerContent::getRealDir($composerJsonPath);
+        $raw = json_decode(file_get_contents($projectDir . '/composer.json'), true);
+        $composerContent = ComposerContent::instantiate($raw);
 
-    public function execute(InputInterface $input, OutputInterface $output)
-    {
-        $findNameSpace = new Name($this->argument->getFindNameSpace());
-        $this->traverser->addVisitor(new FindVisitor($findNameSpace, $output));
-        $findPath = $this->argument->getFindPath();
-        if (strpos($findPath, '.php') !== false) {
-            $this->proc($findPath);
-            return;
+        if (($findNameOption = $input->getOption('find_namespace')) === null) {
+            throw new \RuntimeException('-F:--find_namespace is required');
         }
+        $findName = preg_replace('/^\\\/', '', $findNameOption);
 
-        /** @var \Symfony\Component\Finder\SplFileInfo $file */
-        foreach ($this->fileStream->findFiles($findPath) as $file) {
-            $absoluteFilePathName = $file->getRealPath();
-            if (preg_match("/{$this->argument->getExcludePath()}/", $absoluteFilePathName)) {
-                continue;
-            }
+        $searchPaths = array_merge(
+            $composerContent->getFileAndDirsToSearch(),
+            (array)$input->getOption('additional_path')
+        );
 
-            $this->proc($absoluteFilePathName);
+        $loopOption = ['min_size' => 1, 'max_size' => $input->getOption('max_process')];
+        $payload = ['find_name' => $findName];
+
+        foreach ($searchPaths as $searchPath) {
+            $loop = EventLoopFactory::create();
+            $childProcess = Flexible::createFromClass(Find::class, $loop, $loopOption);
+            $targetPath = $projectDir . '/' . $searchPath;
+            $this->communicateWithChild($loop, $childProcess, $payload, $targetPath);
         }
-    }
-
-    private function proc($filePath)
-    {
-        $stmts = $this->parser->parse($this->fileStream->get($filePath));
-        FindVisitor::$filePath = $filePath;
-        $this->traverser->traverse($stmts);
     }
 }

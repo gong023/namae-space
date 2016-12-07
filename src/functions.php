@@ -10,11 +10,16 @@ use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\Parser;
 use PhpParser\ParserFactory;
+use React\EventLoop\LoopInterface;
+use React\Promise\PromiseInterface;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use RegexIterator;
 use SplFileInfo;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Console\Output\OutputInterface;
+use WyriHaximus\React\ChildProcess\Messenger\Messages\Payload;
+use WyriHaximus\React\ChildProcess\Pool\PoolInterface;
 
 function joinToString($glue, $pieces, $length)
 {
@@ -67,6 +72,27 @@ function applyToEachFile($targetPath, callable $proc)
         $proc($file, $i >= $cnt);
         $i++;
     }
+}
+
+function getIterator($targetPath)
+{
+    if (is_file($targetPath) && strpos($targetPath, '.php')) {
+        return [new SplFileInfo($targetPath)];
+    }
+
+    return new RegexIterator(
+        new RecursiveIteratorIterator(new RecursiveDirectoryIterator($targetPath)),
+        '/^.+\.php$/i'
+    );
+}
+
+function write($message)
+{
+    static $output;
+    if ($output === null) {
+        $output = new ConsoleOutput();
+    }
+    $output->write($message);
 }
 
 /**

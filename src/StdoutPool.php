@@ -8,12 +8,12 @@ class StdoutPool
 {
     public static $stdouts = [];
 
-    public static function dump(OutputInterface $output)
+    public static function dump()
     {
-        $output->writeln('');
+        \NamaeSpace\write("\n");
         foreach (self::$stdouts as $stdout) {
             if ($stdout !== null) {
-                $output->writeln($stdout);
+                \NamaeSpace\write("$stdout\n");
             }
         }
     }

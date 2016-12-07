@@ -158,7 +158,7 @@ function traverseToFind($findName, $codeString, $tagetRealPath)
 
 function createParser()
 {
-    $lexer = new Lexer(['usedAttributes' => ['startFilePos']]);
+    $lexer = new Lexer(['usedAttributes' => ['startFilePos', 'startLine']]);
     $parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP5, $lexer);
 
     return $parser;

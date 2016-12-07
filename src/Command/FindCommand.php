@@ -5,6 +5,7 @@ namespace NamaeSpace\Command;
 use NamaeSpace\ChildProcess\Find;
 use NamaeSpace\ComposerContent;
 use NamaeSpace\Command;
+use NamaeSpace\StdoutPool;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -52,5 +53,7 @@ class FindCommand extends Command
             $targetPath = $projectDir . '/' . $searchPath;
             $this->communicateWithChild($loop, $childProcess, $payload, $targetPath);
         }
+
+        StdoutPool::dump();
     }
 }

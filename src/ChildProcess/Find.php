@@ -21,9 +21,9 @@ class Find implements ChildInterface
                 $targetRealPath = $payload['target_real_path'];
                 $findName = $payload['find_name'];
                 $codeString = file_get_contents($targetRealPath);
-                list($stdout, $stdoutPool) = \NamaeSpace\traverseToFind($findName, $codeString, $targetRealPath);
+                list($isFound, $stdoutPool) = \NamaeSpace\traverseToFind($findName, $codeString, $targetRealPath);
 
-                return \React\Promise\resolve(['stdout' => $stdout, 'stdout_pool' => $stdoutPool]);
+                return \React\Promise\resolve(['stdout' => $isFound ? 'F' : '.', 'stdout_pool' => $stdoutPool]);
             } catch (\Exception $e) {
                 return \React\Promise\reject([
                     'sent_payload'      => $payload->getPayload(),

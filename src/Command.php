@@ -42,5 +42,7 @@ class Command extends SymfonyCommand
                 $i++;
             }
         });
+
+        $loop->run();
     }
 }

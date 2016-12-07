@@ -118,6 +118,6 @@ class ReplaceCommand extends Command
 
             $loop->run();
         }
-        StdoutPool::dump($output);
+        StdoutPool::dump();
     }
 }

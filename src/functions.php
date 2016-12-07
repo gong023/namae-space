@@ -2,6 +2,7 @@
 
 namespace NamaeSpace;
 
+use NamaeSpace\Visitor\FindVisitor;
 use NamaeSpace\Visitor\ReplaceVisitor;
 use PhpParser\Error;
 use PhpParser\Lexer;
@@ -50,23 +51,25 @@ function arrayFlatten(array $array)
     return $values;
 }
 
-function applyToEachFile($targetPath, callable $proc)
+function getIterator($targetPath)
 {
     if (is_file($targetPath) && strpos($targetPath, '.php')) {
-        $proc(new SplFileInfo($targetPath), true);
-        return;
+        return [new SplFileInfo($targetPath)];
     }
-    $it = new RegexIterator(
+
+    return new RegexIterator(
         new RecursiveIteratorIterator(new RecursiveDirectoryIterator($targetPath)),
         '/^.+\.php$/i'
     );
-    $cnt = iterator_count($it);
-    $i = 1;
-    /** @var SplFileInfo $file */
-    foreach ($it as $file) {
-        $proc($file, $i >= $cnt);
-        $i++;
+}
+
+function write($message)
+{
+    static $output;
+    if ($output === null) {
+        $output = new ConsoleOutput();
     }
+    $output->write($message);
 }
 
 /**
@@ -94,6 +97,29 @@ function traverseToReplace(SplFileInfo $fileInfo, Name $originName, Name $newNam
     return $code;
 }
 
+/**
+ * @param string $findName
+ * @param string $codeString
+ * @param string $tagetRealPath
+ * @return array
+ */
+function traverseToFind($findName, $codeString, $tagetRealPath)
+{
+    $traverser = new NodeTraverser();
+    $traverser->addVisitor(new NameResolver());
+    $findVisitor = new FindVisitor($findName, $tagetRealPath);
+    $traverser->addVisitor($findVisitor);
+
+    $stmts = \NamaeSpace\createParser()->parse($codeString);
+    try {
+        $traverser->traverse($stmts);
+    } catch (Error $e) {
+        throw new \RuntimeException("[$tagetRealPath] {$e->getMessage()}");
+    }
+
+    return [$findVisitor->isFound, $findVisitor->foundString];
+}
+
 //function getMutableStringToReplace($rawCodeString, $rawOriginName, $rawNewName)
 //{
 //    $code = new MutableString($rawCodeString);
@@ -113,7 +139,7 @@ function traverseToReplace(SplFileInfo $fileInfo, Name $originName, Name $newNam
 
 function createParser()
 {
-    $lexer = new Lexer(['usedAttributes' => ['startFilePos']]);
+    $lexer = new Lexer(['usedAttributes' => ['startFilePos', 'startLine']]);
     $parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP5, $lexer);
 
     return $parser;

@@ -8,7 +8,7 @@ use PhpParser\NodeVisitorAbstract;
 
 class FindVisitor extends NodeVisitorAbstract
 {
-    public $stdout = null;
+    public $foundString = null;
     public $isFound = false;
 
     private $findName;
@@ -26,15 +26,15 @@ class FindVisitor extends NodeVisitorAbstract
             if ($node->toString() === $this->findName) {
                 $this->isFound = true;
                 $line = $node->getLine();
-                $this->stdout .= '<comment>' . $this->realPath . ":L$line</comment>\n";
+                $this->foundString .= '<comment>' . $this->realPath . ":L$line</comment>\n";
                 $file = new \SplFileObject($this->realPath);
                 $startLine = ($line - 4) < 0 ? 0 : $line - 4;
                 $file->seek($startLine);
                 for ($i = -3; $i <= 3; $i++) {
                     if ($file->key() === $line - 1) {
-                        $this->stdout .= '<info>' . $file->current() . '</info>';
+                        $this->foundString .= '<info>' . $file->current() . '</info>';
                     } else {
-                        $this->stdout .= $file->current();
+                        $this->foundString .= $file->current();
                     }
                     $file->next();
                 }

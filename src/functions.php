@@ -136,7 +136,7 @@ function traverseToFind($findName, $codeString, $tagetRealPath)
         throw new \RuntimeException("[$tagetRealPath] {$e->getMessage()}");
     }
 
-    return [$findVisitor->isFound, $findVisitor->stdout];
+    return [$findVisitor->isFound, $findVisitor->foundString];
 }
 
 //function getMutableStringToReplace($rawCodeString, $rawOriginName, $rawNewName)

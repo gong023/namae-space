@@ -3,13 +3,22 @@ NamaeSpace
 
 [![Build Status](https://travis-ci.org/gong023/namae-space.svg?branch=master)](https://travis-ci.org/gong023/namae-space)
 
-NamaeSpace is util command for PHP namespace. For now, you can replace namespace by static analysis.
+NamaeSpace is util command for PHP namespace. this command enables you to find and replace namespace using static analysis.
 
 ## Usage
 
-### Replace
+### Find
 
-You can replace php namespace.
+```
+namaespace find -C $HOME/your/project \ # path to your project composer.json
+                -F Name\\YourClass      # Name what you want to find
+```
+
+`namaespace` commmand stdouts usage of `Name\\YourClass`.
+
+See `--help` to know further.
+
+### Replace
 
 ```
 namaespace replace -C $HOME/your/project      \ # path to your project composer.json
@@ -17,19 +26,15 @@ namaespace replace -C $HOME/your/project      \ # path to your project composer.
                    -N New\\YourNewClass         # NewClassName which you want to replace
 ```
 
-namaespace command will read composer.json, find `YourOriginClass`, then replace it to `YourNewClass`.
+`namaespace` command finds `YourOriginClass`, and then replaces it to `YourNewClass`.
+
+You can pass `-D` or `--dry_run` option if you wanna test before replace. See `--help` to know further.
 
 Unlike IDE, NamaeSpace can change Global namespace to be named.
 
-You can pass `--dry_run` option if you wanna test before replace. See `--help` to know further.
-
-### Find
-
-WIP
-
 ## Installation
 
-### Download built phar
+### Download phar already built
 
 You can download from here: https://github.com/gong023/namae-space/raw/gh-pages/namaespace.phar
 
@@ -57,10 +62,8 @@ mv namaespace.phar $PATH
 
 ## How does it work
 
-NamaeSpace finds paths by reading composer.json and analysis codes. 
+`namaespace` finds paths by reading composer.json and analyses codes. 
 
-Mainly analyzing is delegated to https://github.com/nikic/PHP-Parser/. You don't have to worry about instability of regex.
+Mainly analysis is delegated to [nikic/PHP-Parser](https://github.com/nikic/PHP-Parser/). You don't have to worry about instability of regex.
 
-## Information
-
-- NamaeSpace is still beta. Pull requests and reporting issues are welcome.
+And analysis is executed under multi processing. You can pass `-M` or `--max_process` option to control number of process for any commands.

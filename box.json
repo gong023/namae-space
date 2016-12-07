@@ -16,7 +16,7 @@
   ],
   "git-version": "package_version",
   "intercept": true,
-  "main": "bin/namaespace.php",
+  "main": "bin/namaespace",
   "output": "namaespace.phar",
   "stub": true
 }

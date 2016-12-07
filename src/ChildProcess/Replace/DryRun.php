@@ -3,7 +3,6 @@
 namespace NamaeSpace\ChildProcess\Replace;
 
 use NamaeSpace\MutableString;
-use NamaeSpace\Visitor\ReplaceVisitor;
 use PhpParser\Node\Name;
 use React\EventLoop\LoopInterface;
 use SebastianBergmann\Diff\Differ;

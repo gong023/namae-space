@@ -2,6 +2,7 @@
 
 namespace NamaeSpace;
 
+use NamaeSpace\Visitor\FindVisitor;
 use NamaeSpace\Visitor\ReplaceVisitor;
 use PhpParser\Error;
 use PhpParser\Lexer;
@@ -10,16 +11,11 @@ use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\Parser;
 use PhpParser\ParserFactory;
-use React\EventLoop\LoopInterface;
-use React\Promise\PromiseInterface;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use RegexIterator;
 use SplFileInfo;
 use Symfony\Component\Console\Output\ConsoleOutput;
-use Symfony\Component\Console\Output\OutputInterface;
-use WyriHaximus\React\ChildProcess\Messenger\Messages\Payload;
-use WyriHaximus\React\ChildProcess\Pool\PoolInterface;
 
 function joinToString($glue, $pieces, $length)
 {
@@ -118,6 +114,29 @@ function traverseToReplace(SplFileInfo $fileInfo, Name $originName, Name $newNam
     }
 
     return $code;
+}
+
+/**
+ * @param string $findName
+ * @param string $codeString
+ * @param string $tagetRealPath
+ * @return array
+ */
+function traverseToFind($findName, $codeString, $tagetRealPath)
+{
+    $traverser = new NodeTraverser();
+    $traverser->addVisitor(new NameResolver());
+    $findVisitor = new FindVisitor($findName, $tagetRealPath);
+    $traverser->addVisitor($findVisitor);
+
+    $stmts = \NamaeSpace\createParser()->parse($codeString);
+    try {
+        $traverser->traverse($stmts);
+    } catch (Error $e) {
+        throw new \RuntimeException("[$tagetRealPath] {$e->getMessage()}");
+    }
+
+    return [$findVisitor->isFound, $findVisitor->stdout];
 }
 
 //function getMutableStringToReplace($rawCodeString, $rawOriginName, $rawNewName)

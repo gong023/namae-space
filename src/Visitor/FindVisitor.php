@@ -5,45 +5,36 @@ namespace NamaeSpace\Visitor;
 use PhpParser\Node;
 use PhpParser\Node\Name;
 use PhpParser\NodeVisitorAbstract;
-use Symfony\Component\Console\Output\OutputInterface;
 
-/**
- * as quick as possible
- */
 class FindVisitor extends NodeVisitorAbstract
 {
-    public static $filePath;
+    public $stdout = null;
+    public $isFound = false;
 
-    /**
-     * @var Name
-     */
-    private $findNameSpace;
+    private $findName;
+    private $realPath;
 
-    /**
-     * @var OutputInterface
-     */
-    private $output;
-
-    public function __construct(Name $findNameSpace, OutputInterface $output)
+    public function __construct($findName, $realPath)
     {
-        $this->findNameSpace = $findNameSpace;
-        $this->output = $output;
+        $this->findName = $findName;
+        $this->realPath = $realPath;
     }
 
     public function leaveNode(Node $node)
     {
         if ($node instanceof Name) {
-            if ($node->toString() === $this->findNameSpace->toString()) {
+            if ($node->toString() === $this->findName) {
+                $this->isFound = true;
                 $line = $node->getLine();
-                $this->output->writeln('<comment>' . self::$filePath . ":L$line</comment>");
-                $file = new \SplFileObject(self::$filePath);
+                $this->stdout .= '<comment>' . $this->realPath . ":L$line</comment>\n";
+                $file = new \SplFileObject($this->realPath);
                 $startLine = ($line - 4) < 0 ? 0 : $line - 4;
                 $file->seek($startLine);
                 for ($i = -3; $i <= 3; $i++) {
                     if ($file->key() === $line - 1) {
-                        $this->output->write('<info>' . $file->current() . '</info>');
+                        $this->stdout .= '<info>' . $file->current() . '</info>';
                     } else {
-                        echo $file->current();
+                        $this->stdout .= $file->current();
                     }
                     $file->next();
                 }

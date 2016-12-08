@@ -18,7 +18,7 @@ class Command extends SymfonyCommand
         $targetPath
     ) {
         $iterator = \NamaeSpace\getIterator($targetPath);
-        $iteratorCnt = iterator_count($iterator);
+        $iteratorCnt = $iterator instanceof \Traversable ? iterator_count($iterator) : 1;
         $i = 1;
 
         $childProcess->then(function (PoolInterface $pool) use ($loop, $payload, $targetPath, $iterator, $iteratorCnt, &$i) {

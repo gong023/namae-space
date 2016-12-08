@@ -14,7 +14,7 @@ namaespace find -C $HOME/your/project \ # path to your project composer.json
                 -F Name\\YourClass      # Name what you want to find
 ```
 
-`namaespace` commmand stdouts usage of `Name\\YourClass`.
+`namaespace` command stdouts usage of `Name\\YourClass`.
 
 See `--help` to know further.
 

@@ -17,14 +17,14 @@ class Command extends SymfonyCommand
         array $payload,
         $targetPath
     ) {
-        $iterator = \NamaeSpace\getIterator($targetPath);
-        $iteratorCnt = $iterator instanceof \Traversable ? iterator_count($iterator) : 1;
-        $i = 1;
+        $childProcess->then(function (PoolInterface $pool) use ($loop, $payload, $targetPath) {
+            $iterator = \NamaeSpace\getIterator($targetPath);
+            $iteratorCnt = $iterator instanceof \Traversable ? iterator_count($iterator) : 1;
+            $i = 1;
 
-        $childProcess->then(function (PoolInterface $pool) use ($loop, $payload, $targetPath, $iterator, $iteratorCnt, &$i) {
-            $isEnd = $i >= $iteratorCnt;
             /** @var \SplFileInfo $fileInfo */
             foreach ($iterator as $fileInfo) {
+                $isEnd = $i >= $iteratorCnt;
                 $payload['target_real_path'] = $fileInfo->getRealPath();
                 $pool->rpc(MessagesFactory::rpc('return', $payload))
                     ->then(function (Payload $payload) use ($isEnd, $pool, $loop) {

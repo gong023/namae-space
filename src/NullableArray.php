@@ -2,6 +2,9 @@
 
 namespace NamaeSpace;
 
+/**
+ * @property array container
+ */
 final class NullableArray implements \ArrayAccess
 {
     public function __construct(array $array = null)

@@ -48,10 +48,17 @@ class ReplaceVisitor extends NodeVisitorAbstract
             }
             if (isset($node->namespacedName) && $node->namespacedName->toString() === $this->originName->toString()) {
                 $this->code->isTargetClass = true;
+                if ($node->isAbstract()) {
+                    $prefix = 'abstract class ';
+                } elseif ($node->isFinal()) {
+                    $prefix = 'final class ';
+                } else {
+                    $prefix = 'class ';
+                }
                 $this->code->addModification(
                     $node->getAttribute('startFilePos'),
-                    'class ' . $node->namespacedName->getLast(),
-                    'class ' . $this->newName->getLast()
+                    $prefix . $node->namespacedName->getLast(),
+                    $prefix . $this->newName->getLast()
                 );
             } elseif ($node->extends !== null) {
                 $this->addMatchedNameModification($node->extends);

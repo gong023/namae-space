@@ -34,66 +34,47 @@ class ReplaceVisitor extends NodeVisitorAbstract
         $this->code = $code;
     }
 
-    public function beforeTraverse(array $nodes)
-    {
-        $this->code->named = $this->code->stmtUseModified = false;
-        $this->code->stmtNameSpacePosEnd = $this->code->stmtClassLikePosStart = $this->code->stmtUsesPosStart = null;
-    }
-
     public function leaveNode(Node $node)
     {
-        if ($node instanceof Stmt\Class_) {
+        if ($node instanceof Stmt\ClassLike) {
             if (isset($node->namespacedName)) {
                 $this->code->stmtClassLikePosStart = $node->getAttribute('startFilePos') - 1;
             }
             if (isset($node->namespacedName) && $node->namespacedName->toString() === $this->originName->toString()) {
                 $this->code->isTargetClass = true;
-                if ($node->isAbstract()) {
-                    $prefix = 'abstract class ';
-                } elseif ($node->isFinal()) {
-                    $prefix = 'final class ';
+                if ($node instanceof Stmt\Class_) {
+                    if ($node->isAbstract()) {
+                        $prefix = 'abstract class ';
+                    } elseif ($node->isFinal()) {
+                        $prefix = 'final class ';
+                    } else {
+                        $prefix = 'class ';
+                    }
+                } elseif ($node instanceof Stmt\Interface_) {
+                    $prefix = 'interface ';
+                } elseif ($node instanceof Stmt\Trait_) {
+                    $prefix = 'trait ';
                 } else {
-                    $prefix = 'class ';
+                    throw new \LogicException('invalid stmt class');
                 }
                 $this->code->addModification(
                     $node->getAttribute('startFilePos'),
                     $prefix . $node->namespacedName->getLast(),
                     $prefix . $this->newName->getLast()
                 );
-            } elseif ($node->extends !== null) {
-                $this->addMatchedNameModification($node->extends);
             } else {
-                foreach ($node->implements as $implement) {
-                    $this->addMatchedNameModification($implement);
+                if ($node instanceof Stmt\Class_) {
+                    $this->addMatchedNameModification($node->extends);
+                    foreach ($node->implements as $implement) {
+                        $this->addMatchedNameModification($implement);
+                    }
                 }
-            }
-        } elseif ($node instanceof Stmt\Interface_) {
-            if (isset($node->namespacedName)) {
-                $this->code->stmtClassLikePosStart = $node->getAttribute('startFilePos') - 1;
-            }
-            if (isset($node->namespacedName) && $node->namespacedName->toString() === $this->originName->toString()) {
-                $this->code->isTargetClass = true;
-                $this->code->addModification(
-                    $node->getAttribute('startFilePos'),
-                    'interface ' . $node->namespacedName->getLast(),
-                    'interface ' . $this->newName->getLast()
-                );
-            } else {
-                foreach ($node->extends as $extend) {
-                    $this->addMatchedNameModification($extend);
+
+                if ($node instanceof Stmt\Interface_) {
+                    foreach ($node->extends as $extend) {
+                        $this->addMatchedNameModification($extend);
+                    }
                 }
-            }
-        } elseif ($node instanceof Stmt\Trait_) {
-            if (isset($node->namespacedName)) {
-                $this->code->stmtClassLikePosStart = $node->getAttribute('startFilePos') - 1;
-            }
-            if (isset($node->namespacedName) && $node->namespacedName->toString() === $this->originName->toString()) {
-                $this->code->isTargetClass = true;
-                $this->code->addModification(
-                    $node->getAttribute('startFilePos'),
-                    'trait ' . $node->namespacedName->getLast(),
-                    'trait ' . $this->newName->getLast()
-                );
             }
         } elseif ($node instanceof Stmt\Use_ || $node instanceof Stmt\GroupUse) {
             foreach ($node->uses as $use) {

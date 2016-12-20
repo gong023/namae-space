@@ -19,28 +19,26 @@ class Command extends SymfonyCommand
     ) {
         $childProcess->then(function (PoolInterface $pool) use ($loop, $payload, $targetPath) {
             $iterator = \NamaeSpace\getIterator($targetPath);
-            $iteratorCnt = $iterator instanceof \Traversable ? iterator_count($iterator) : 1;
-            $i = 1;
 
+            $promises = [];
             /** @var \SplFileInfo $fileInfo */
             foreach ($iterator as $fileInfo) {
-                $isEnd = $i >= $iteratorCnt;
                 $payload['target_real_path'] = $fileInfo->getRealPath();
-                $pool->rpc(MessagesFactory::rpc('return', $payload))
-                    ->then(function (Payload $payload) use ($isEnd, $pool, $loop) {
+                $promises[] = $pool->rpc(MessagesFactory::rpc('return', $payload))
+                    ->then(function (Payload $payload) {
                         \NamaeSpace\write($payload['stdout']);
                         StdoutPool::$stdouts[] = $payload['stdout_pool'];
-                        if ($isEnd) {
-                            $pool->terminate(MessagesFactory::message());
-                            $loop->stop();
-                        }
                     }, function (Payload $payload) {
                         \NamaeSpace\write($payload['exception_class'] . PHP_EOL);
                         \NamaeSpace\write($payload['exception_message'] . PHP_EOL);
                     });
-
-                $i++;
             }
+
+            \React\Promise\all($promises)
+                ->then(function () use ($pool, $loop) {
+                    $pool->terminate(MessagesFactory::message());
+                    $loop->stop();
+                });
         });
 
         $loop->run();

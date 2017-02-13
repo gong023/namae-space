@@ -5,6 +5,12 @@ NamaeSpace
 
 NamaeSpace is util command for PHP namespace. this command enables you to find and replace namespace using static analysis.
 
+## Installation
+
+```
+composer require --dev gong023/namae-space
+```
+
 ## Usage
 
 ### Find
@@ -31,34 +37,6 @@ namaespace replace -C $HOME/your/project      \ # path to your project composer.
 You can pass `-D` or `--dry_run` option if you wanna test before replace. See `--help` to know further.
 
 Unlike IDE, NamaeSpace can change Global namespace to be named.
-
-## Installation
-
-### Download phar already built
-
-You can download from here: https://github.com/gong023/namae-space/raw/gh-pages/namaespace.phar
-
-Do not forget to move namaespace.phar to your $PATH
-
-### Incude your project
-
-Alternatively you can install this command in your project.
-
-```
-composer require --dev gong023/namae-space
-```
-
-In this case, you will be able to skip input of comoser.json path.
-
-### Build phar by yourself
-
-```
-git clone https://github.com/gong023/namae-space.git
-cd namae-space
-./build.sh
-chmod 777 namaespace.phar
-mv namaespace.phar $PATH
-```
 
 ## How does it work
 

@@ -20,6 +20,7 @@ class Command extends SymfonyCommand
         $childProcess->then(function (PoolInterface $pool) use ($loop, $payload, $targetPath) {
             $iterator = \NamaeSpace\getIterator($targetPath);
 
+            // iterator is meaningless due to here
             $promises = [];
             /** @var \SplFileInfo $fileInfo */
             foreach ($iterator as $fileInfo) {

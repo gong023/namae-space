@@ -6,8 +6,6 @@ use NamaeSpace\ChildProcess\Replace\DryRun;
 use NamaeSpace\ChildProcess\Replace\Overwrite;
 use NamaeSpace\ComposerContent;
 use NamaeSpace\StdoutPool;
-use PhpParser\Lexer;
-use PhpParser\Node\Name;
 use React\EventLoop\Factory as EventLoopFactory;
 use NamaeSpace\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;

@@ -10,9 +10,9 @@ use PhpParser\Node\Name;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\ParserFactory;
+use RecursiveCallbackFilterIterator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
-use RegexIterator;
 use SplFileInfo;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
@@ -50,16 +50,47 @@ function arrayFlatten(array $array)
     return $values;
 }
 
-function getIterator($targetPath)
+function getIterator($targetPath, $excludes = [])
 {
-    if (is_file($targetPath) && strpos($targetPath, '.php')) {
-        return [new SplFileInfo($targetPath)];
+    if (is_file($targetPath)) {
+        if (isAppropriateFile($targetPath, $excludes)) {
+            return [new SplFileInfo($targetPath)];
+        } else {
+            return [];
+        }
     }
 
-    return new RegexIterator(
-        new RecursiveIteratorIterator(new RecursiveDirectoryIterator($targetPath)),
-        '/^.+\.php$/i'
-    );
+    $base = new RecursiveDirectoryIterator($targetPath);
+
+    /**
+     * @param SplFileInfo $file
+     * @param mixed $key
+     * @param $it \RecursiveCallbackFilterIterator
+     * @return bool
+     */
+    $filter = function ($file, $key, $it) use ($excludes) {
+        if ($file->isFile()) {
+            return isAppropriateFile($file->getPathname(), $excludes);
+        }
+
+        return $it->hasChildren();
+    };
+
+    return new RecursiveIteratorIterator(new RecursiveCallbackFilterIterator($base, $filter));
+}
+
+function isAppropriateFile($pathname, array $excludes)
+{
+    if (!strpos($pathname, '.php')) {
+        return false;
+    }
+    foreach ($excludes as $exclude) {
+        if (strpos($pathname, $exclude)) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 function write($message)

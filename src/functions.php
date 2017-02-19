@@ -50,7 +50,7 @@ function arrayFlatten(array $array)
     return $values;
 }
 
-function getIterator($targetPath, $excludes = [])
+function getIterator($targetPath, $excludes)
 {
     if (is_file($targetPath)) {
         if (isAppropriateFile($targetPath, $excludes)) {

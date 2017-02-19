@@ -24,6 +24,7 @@ class ReplaceCommand extends Command
             ->setDescription('replace namespace')
             ->addOption('composer_json', 'C', InputOption::VALUE_REQUIRED, 'path for composer.json')
             ->addOption('additional_path', 'A', InputOption::VALUE_REQUIRED, 'additional path to search. must be relative from project base path')
+            ->addOption('exclude_paths', 'E', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'exlude paths to search.')
             ->addOption('origin_namespace', 'O', InputOption::VALUE_REQUIRED)
             ->addOption('new_namespace', 'N', InputOption::VALUE_REQUIRED)
             ->addOption('replace_dir', 'R', InputOption::VALUE_REQUIRED, 'relative path from project base to put new namespace file. pass this argument if you don\'t wanna be asked')
@@ -71,6 +72,8 @@ class ReplaceCommand extends Command
             }
         }
 
+        $excludePaths = $input->getOption('exclude_paths');
+
         $searchPaths = array_merge(
             $composerContent->getFileAndDirsToSearch(),
             (array)$input->getOption('additional_path')
@@ -92,7 +95,7 @@ class ReplaceCommand extends Command
                 $childProcess = Flexible::createFromClass(Overwrite::class, $loop, $loopOption);
             }
             $targetPath = $projectDir . '/' . $searchPath;
-            $this->communicateWithChild($loop, $childProcess, $payload, $targetPath);
+            $this->communicateWithChild($loop, $childProcess, $payload, $targetPath, $excludePaths);
         }
 
         StdoutPool::dump();

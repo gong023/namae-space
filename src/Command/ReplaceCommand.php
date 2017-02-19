@@ -23,8 +23,8 @@ class ReplaceCommand extends Command
             ->setName('replace')
             ->setDescription('replace namespace')
             ->addOption('composer_json', 'C', InputOption::VALUE_REQUIRED, 'path for composer.json')
-            ->addOption('additional_path', 'A', InputOption::VALUE_REQUIRED, 'additional path to search. must be relative from project base path')
-            ->addOption('exclude_paths', 'E', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'exlude paths to search.')
+            ->addOption('additional_paths', 'A', InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED, 'additional paths to search. must be relative from project base path')
+            ->addOption('exclude_paths', 'E', InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED, 'exlude paths to search.')
             ->addOption('origin_namespace', 'O', InputOption::VALUE_REQUIRED)
             ->addOption('new_namespace', 'N', InputOption::VALUE_REQUIRED)
             ->addOption('replace_dir', 'R', InputOption::VALUE_REQUIRED, 'relative path from project base to put new namespace file. pass this argument if you don\'t wanna be asked')
@@ -76,7 +76,7 @@ class ReplaceCommand extends Command
 
         $searchPaths = array_merge(
             $composerContent->getFileAndDirsToSearch(),
-            (array)$input->getOption('additional_path')
+            $input->getOption('additional_paths')
         );
 
         $loopOption = ['min_size' => 1, 'max_size' => $input->getOption('max_process')];

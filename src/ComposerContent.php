@@ -2,8 +2,6 @@
 
 namespace NamaeSpace;
 
-use PhpParser\Node\Name;
-
 class ComposerContent
 {
     /**

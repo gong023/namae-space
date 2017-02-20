@@ -2,8 +2,6 @@
 
 namespace NamaeSpace;
 
-use PhpParser\Node\Name;
-
 class ComposerContentTest extends \PHPUnit_Framework_TestCase
 {
     /**

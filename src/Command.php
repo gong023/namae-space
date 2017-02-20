@@ -15,10 +15,11 @@ class Command extends SymfonyCommand
         LoopInterface $loop,
         PromiseInterface $childProcess,
         array $payload,
-        $targetPath
+        $targetPath,
+        array $excludePaths
     ) {
-        $childProcess->then(function (PoolInterface $pool) use ($loop, $payload, $targetPath) {
-            $iterator = \NamaeSpace\getIterator($targetPath);
+        $childProcess->then(function (PoolInterface $pool) use ($loop, $payload, $targetPath, $excludePaths) {
+            $iterator = \NamaeSpace\getIterator($targetPath, $excludePaths);
 
             // iterator is meaningless due to here
             $promises = [];

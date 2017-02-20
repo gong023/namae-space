@@ -23,12 +23,12 @@ class ReplaceCommand extends Command
             ->setName('replace')
             ->setDescription('replace namespace')
             ->addOption('composer_json', 'C', InputOption::VALUE_REQUIRED, 'path for composer.json')
-            ->addOption('additional_paths', 'A', InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED, 'additional paths to search. must be relative from project base path')
-            ->addOption('exclude_paths', 'E', InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED, 'exlude paths to search.')
             ->addOption('origin_namespace', 'O', InputOption::VALUE_REQUIRED)
             ->addOption('new_namespace', 'N', InputOption::VALUE_REQUIRED)
             ->addOption('replace_dir', 'R', InputOption::VALUE_REQUIRED, 'relative path from project base to put new namespace file. pass this argument if you don\'t wanna be asked')
             ->addOption('max_process', 'M', InputOption::VALUE_REQUIRED, 'max num of process', 10)
+            ->addOption('additional_paths', 'A', InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED, 'additional paths to search. must be relative from project base path')
+            ->addOption('exclude_paths', 'E', InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED, 'exlude paths to search.')
             ->addOption('dry_run', 'D', InputOption::VALUE_NONE);
     }
 

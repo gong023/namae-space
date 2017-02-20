@@ -14,7 +14,7 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
     public function testGetIterator()
     {
         // get all
-        $files = iterator_to_array(getIterator(self::$iterTest));
+        $files = iterator_to_array(getIterator(self::$iterTest, []));
         $this->assertCount(3, $files);
         foreach (['A.php', 'B.php', 'C.php'] as $expected) {
             /** @var \SplFileInfo */
@@ -24,7 +24,7 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
 
         // get a file
         /** @var $files \SplFileInfo[] */
-        $files = getIterator(self::$iterTest . 'B/C/C.php');
+        $files = getIterator(self::$iterTest . 'B/C/C.php', []);
         $this->assertCount(1, $files);
         $this->assertSame('C.php', $files[0]->getFileName());
 

@@ -22,7 +22,7 @@ class FindCommand extends Command
             ->addOption('composer_json', 'C', InputOption::VALUE_REQUIRED, 'path for composer.json')
             ->addOption('find_namespace', 'F', InputOption::VALUE_REQUIRED)
             ->addOption('additional_paths', 'A', InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED, 'additional paths to search. must be relative from project base path')
-            ->addOption('exclude_paths', 'E', InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED, 'exlude paths to search.')
+            ->addOption('exclude_paths', 'E', InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED, 'exclude paths to search.')
             ->addOption('max_process', 'M', InputOption::VALUE_REQUIRED, 'max num of process', 10);
     }
 
@@ -45,7 +45,7 @@ class FindCommand extends Command
             $input->getOption('additional_paths')
         );
 
-        $excludePaths = $input->getOption('exlude_paths');
+        $excludePaths = $input->getOption('exclude_paths');
         $loopOption = ['min_size' => 1, 'max_size' => $input->getOption('max_process')];
         $payload = ['find_name' => $findName];
 

@@ -4,6 +4,8 @@ namespace NamaeSpace\Command;
 
 use NamaeSpace\ChildProcess\Replace\DryRun;
 use NamaeSpace\ChildProcess\Replace\Overwrite;
+use NamaeSpace\Command\Input\InvalidReplaceDirException;
+use NamaeSpace\Command\Input\ReplaceContext;
 use NamaeSpace\ComposerContent;
 use NamaeSpace\StdoutPool;
 use React\EventLoop\Factory as EventLoopFactory;
@@ -28,7 +30,7 @@ class ReplaceCommand extends Command
             ->addOption('replace_dir', 'R', InputOption::VALUE_REQUIRED, 'relative path from project base to put new namespace file. pass this argument if you don\'t wanna be asked')
             ->addOption('max_process', 'M', InputOption::VALUE_REQUIRED, 'max num of process', 10)
             ->addOption('additional_paths', 'A', InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED, 'additional paths to search. must be relative from project base path')
-            ->addOption('exclude_paths', 'E', InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED, 'exlude paths to search.')
+            ->addOption('exclude_paths', 'E', InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED, 'exclude paths to search.')
             ->addOption('dry_run', 'D', InputOption::VALUE_NONE);
     }
 

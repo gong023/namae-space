@@ -4,18 +4,13 @@ namespace NamaeSpace\Command;
 
 use NamaeSpace\ChildProcess\Replace\DryRun;
 use NamaeSpace\ChildProcess\Replace\Overwrite;
-use NamaeSpace\Command\Input\InvalidReplaceDirException;
-use NamaeSpace\Command\Input\ReplaceContext;
 use NamaeSpace\ComposerContent;
-use NamaeSpace\StdoutPool;
-use React\EventLoop\Factory as EventLoopFactory;
 use NamaeSpace\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ChoiceQuestion;
-use WyriHaximus\React\ChildProcess\Pool\Factory\Flexible;
 
 class ReplaceCommand extends Command
 {
@@ -98,13 +93,12 @@ class ReplaceCommand extends Command
             }
         }
 
-        $loop = EventLoopFactory::create();
         if ($input->getOption('dry_run')) {
-            $childProcess = Flexible::createFromClass(DryRun::class, $loop, $loopOption);
+            $child = DryRun::class;
         } else {
-            $childProcess = Flexible::createFromClass(Overwrite::class, $loop, $loopOption);
+            $child = Overwrite::class;
         }
 
-        $this->executeChild($loop, $childProcess, $searchPaths, $payload);
+        $this->executeChild($child, $searchPaths, $loopOption, $payload);
     }
 }

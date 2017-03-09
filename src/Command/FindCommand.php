@@ -5,12 +5,9 @@ namespace NamaeSpace\Command;
 use NamaeSpace\ChildProcess\Find;
 use NamaeSpace\ComposerContent;
 use NamaeSpace\Command;
-use NamaeSpace\StdoutPool;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use React\EventLoop\Factory as EventLoopFactory;
-use WyriHaximus\React\ChildProcess\Pool\Factory\Flexible;
 
 class FindCommand extends Command
 {
@@ -40,7 +37,7 @@ class FindCommand extends Command
         }
         $findName = preg_replace('/^\\\/', '', $findNameOption);
 
-        $searchPaths = array_merge(
+        $searchRoots = array_merge(
             $composerContent->getFileAndDirsToSearch(),
             $input->getOption('additional_paths')
         );
@@ -49,13 +46,15 @@ class FindCommand extends Command
         $loopOption = ['min_size' => 1, 'max_size' => $input->getOption('max_process')];
         $payload = ['find_name' => $findName];
 
-        foreach ($searchPaths as $searchPath) {
-            $loop = EventLoopFactory::create();
-            $childProcess = Flexible::createFromClass(Find::class, $loop, $loopOption);
-            $targetPath = $projectDir . '/' . $searchPath;
-            $this->communicateWithChild($loop, $childProcess, $payload, $targetPath, $excludePaths);
+        // destroy iterator to enqueue smoothly
+        $searchPaths = [];
+        foreach ($searchRoots as $searchRoot) {
+            /** @var \SplFileInfo $fileInfo */
+            foreach (\NamaeSpace\getIterator($projectDir . '/' . $searchRoot, $excludePaths) as $fileInfo) {
+                $searchPaths[] = $fileInfo->getRealPath();
+            }
         }
 
-        StdoutPool::dump();
+        $this->executeChild(Find::class, $searchPaths, $loopOption, $payload);
     }
 }

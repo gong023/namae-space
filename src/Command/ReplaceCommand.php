@@ -4,18 +4,13 @@ namespace NamaeSpace\Command;
 
 use NamaeSpace\ChildProcess\Replace\DryRun;
 use NamaeSpace\ChildProcess\Replace\Overwrite;
-use NamaeSpace\Command\Input\InvalidReplaceDirException;
-use NamaeSpace\Command\Input\ReplaceContext;
+use NamaeSpace\Command\Context\InvalidReplaceDirException;
+use NamaeSpace\Command\Context\ReplaceContext;
 use NamaeSpace\ComposerContent;
-use NamaeSpace\StdoutPool;
-use React\EventLoop\Factory as EventLoopFactory;
 use NamaeSpace\Command;
-use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Question\ChoiceQuestion;
-use WyriHaximus\React\ChildProcess\Pool\Factory\Flexible;
 
 class ReplaceCommand extends Command
 {
@@ -36,70 +31,22 @@ class ReplaceCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        if (($composerJsonOption = $input->getOption('composer_json')) === null) {
-            throw new \RuntimeException('-C:--composer_json is required');
-        }
-        $projectDir = ComposerContent::getRealDir($composerJsonOption);
-        $raw = json_decode(file_get_contents($projectDir . '/composer.json'), true);
+        $projectRoot = ComposerContent::getRealDir($input->getOption('composer_json'));
+        $raw = json_decode(file_get_contents($projectRoot . '/composer.json'), true);
         $composerContent = ComposerContent::instantiate($raw);
 
-        if (($originNameOption = $input->getOption('origin_namespace')) === null) {
-            throw new \RuntimeException('-O:--origin_namespace is required');
-        }
-        $originName = preg_replace('/^\\\/', '', $originNameOption);
-        if (($newNameSpaceOption = $input->getOption('new_namespace')) === null) {
-            throw new \RuntimeException('-N:--new_namespace is required');
-        }
-        $newName = preg_replace('/^\\\/', '', $newNameSpaceOption);
+        $context = (new ReplaceContext($projectRoot, $input, $composerContent))
+            ->setOriginNameFromInput()
+            ->setNewNameFromInput();
 
-        if (($replaceDir = $input->getOption('replace_dir')) !== null) {
-            if (! is_dir($replaceDir)) {
-                throw new \RuntimeException('invalid replace_dir:' . $replaceDir);
-            }
-        } else {
-            $replaceDirs = $composerContent->getDirsToReplace(explode('\\', $newName));
-            $dirsCount = count($replaceDirs);
-            if ($dirsCount === 0) {
-                throw new \RuntimeException('base dir is not found to put ' . $newName . '.php');
-            } elseif ($dirsCount === 1) {
-                $replaceDir = $replaceDirs[0];
-            } else {
-                $question = new ChoiceQuestion(
-                    'which dir do you use to put ' . $newName . '.php',
-                    $replaceDirs
-                );
-                /** @var QuestionHelper $helper */
-                $helper = $this->getHelper('question');
-                $replaceDir = $helper->ask($input, $output, $question);
-            }
+        try {
+            $context->setReplaceDirFromInput();
+        } catch (InvalidReplaceDirException $e) {
+            $context->replaceDirFallback($this->getHelper('question'), $output);
         }
 
-        $excludePaths = $input->getOption('exclude_paths');
+        $childName = $context->isDryRun() ? DryRun::class : Overwrite::class;
 
-        $searchPaths = array_merge(
-            $composerContent->getFileAndDirsToSearch(),
-            $input->getOption('additional_paths')
-        );
-
-        $loopOption = ['min_size' => 1, 'max_size' => $input->getOption('max_process')];
-        $payload = [
-            'origin_name' => $originName,
-            'new_name'    => $newName,
-            'project_dir' => $projectDir,
-            'replace_dir' => $replaceDir,
-        ];
-
-        foreach ($searchPaths as $searchPath) {
-            $loop = EventLoopFactory::create();
-            if ($input->getOption('dry_run')) {
-                $childProcess = Flexible::createFromClass(DryRun::class, $loop, $loopOption);
-            } else {
-                $childProcess = Flexible::createFromClass(Overwrite::class, $loop, $loopOption);
-            }
-            $targetPath = $projectDir . '/' . $searchPath;
-            $this->communicateWithChild($loop, $childProcess, $payload, $targetPath, $excludePaths);
-        }
-
-        StdoutPool::dump();
+        $this->executeChild($childName, $context);
     }
 }

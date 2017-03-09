@@ -2,6 +2,7 @@
 
 namespace NamaeSpace;
 
+use NamaeSpace\Command\Context;
 use React\EventLoop\Factory as EventLoopFactory;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
 use WyriHaximus\React\ChildProcess\Messenger\Messages\Payload;
@@ -11,17 +12,15 @@ use WyriHaximus\React\ChildProcess\Pool\Factory\Flexible;
 
 class Command extends SymfonyCommand
 {
-    protected function executeChild(
-        $childName,
-        array $searchPaths,
-        $loopOption,
-        $payload
-    ) {
+    protected function executeChild($childName, Context $context)
+    {
         $promises = [];
         $loop = EventLoopFactory::create();
-        $child = Flexible::createFromClass($childName, $loop, $loopOption);
-        foreach ($searchPaths as $searchPath) {
-            $payload['target_real_path'] = $searchPath;
+        $child = Flexible::createFromClass($childName, $loop, $context->getLoopOption());
+
+        foreach ($context->getSearchPaths() as $searchPath) {
+            $payload = $context->setTargetRealPath($searchPath)->getPayload();
+
             $promises[] = $child->then(function (PoolInterface $pool) use ($loop, $payload) {
                 return $pool->rpc(MessagesFactory::rpc('return', $payload))
                     ->then(function (Payload $payload) use ($pool) {

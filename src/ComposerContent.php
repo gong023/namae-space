@@ -2,6 +2,8 @@
 
 namespace NamaeSpace;
 
+use NamaeSpace\NullableArray;
+
 class ComposerContent
 {
     /**

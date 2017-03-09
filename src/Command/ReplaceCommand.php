@@ -76,7 +76,7 @@ class ReplaceCommand extends Command
 
         $excludePaths = $input->getOption('exclude_paths');
 
-        $searchPaths = array_merge(
+        $searchRoots = array_merge(
             $composerContent->getFileAndDirsToSearch(),
             $input->getOption('additional_paths')
         );
@@ -89,17 +89,22 @@ class ReplaceCommand extends Command
             'replace_dir' => $replaceDir,
         ];
 
-        foreach ($searchPaths as $searchPath) {
-            $loop = EventLoopFactory::create();
-            if ($input->getOption('dry_run')) {
-                $childProcess = Flexible::createFromClass(DryRun::class, $loop, $loopOption);
-            } else {
-                $childProcess = Flexible::createFromClass(Overwrite::class, $loop, $loopOption);
+        // destroy iterator to enqueue smoothly
+        $searchPaths = [];
+        foreach ($searchRoots as $searchRoot) {
+            /** @var \SplFileInfo $fileInfo */
+            foreach (\NamaeSpace\getIterator($projectDir . '/' . $searchRoot, $excludePaths) as $fileInfo) {
+                $searchPaths[] = $fileInfo->getRealPath();
             }
-            $targetPath = $projectDir . '/' . $searchPath;
-            $this->communicateWithChild($loop, $childProcess, $payload, $targetPath, $excludePaths);
         }
 
-        StdoutPool::dump();
+        $loop = EventLoopFactory::create();
+        if ($input->getOption('dry_run')) {
+            $childProcess = Flexible::createFromClass(DryRun::class, $loop, $loopOption);
+        } else {
+            $childProcess = Flexible::createFromClass(Overwrite::class, $loop, $loopOption);
+        }
+
+        $this->executeChild($loop, $childProcess, $searchPaths, $payload);
     }
 }

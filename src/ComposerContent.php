@@ -95,8 +95,8 @@ class ComposerContent
     public static function getRealDir($input = null)
     {
         if ($input === null) {
-            if (file_exists(__DIR__ . '/../composer.json')) {
-                return realpath(__DIR__ . '/../');
+            if (file_exists(__DIR__ . '/../../../../composer.json')) {
+                return realpath(__DIR__ . '/../../../../');
             } else {
                 throw new \RuntimeException('composer_json path is required');
             }

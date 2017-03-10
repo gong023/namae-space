@@ -33,6 +33,6 @@ class FindCommand extends Command
         $context = (new FindContext($projectRoot, $input, $composerContent))
             ->setFindNameFromInput();
 
-        $this->executeChild(Find::class, $context);
+        $this->executeChild(Find::class, $context, $output);
     }
 }

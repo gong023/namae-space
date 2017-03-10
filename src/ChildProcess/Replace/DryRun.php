@@ -13,24 +13,9 @@ use WyriHaximus\React\ChildProcess\Messenger\Messenger;
 
 class DryRun implements ChildInterface
 {
-    /**
-     * @var Differ
-     */
     private $differ;
-
-    /**
-     * @var SplFileInfo
-     */
     private $fileInfo;
-
-    /**
-     * @var Name
-     */
     private $originName;
-
-    /**
-     * @var Name
-     */
     private $newName;
 
     private function __construct(
@@ -51,12 +36,11 @@ class DryRun implements ChildInterface
         $code = \NamaeSpace\traverseToReplace($this->fileInfo, $this->originName, $this->newName);
 
         if ($code->hasModification()) {
-            $diff = "<info>{$this->fileInfo->getFilename()}</info>\n"
+            return "<info>{$this->fileInfo->getFilename()}</info>\n"
                 . $this->differ->diff($code->getOrigin(), $code->getModified()) . "\n";
-            return ['!', $diff];
         }
 
-        return ['.', null];
+        return null;
     }
 
     /**
@@ -71,12 +55,15 @@ class DryRun implements ChildInterface
                 $originName = new Name($payload['origin_name']);
                 $newName = new Name($payload['new_name']);
                 $differ = new Differ("--- Original\n+++ New\n", false);
-                list($stdout, $stdoutPool) = (new self($fileInfo, $originName, $newName, $differ))->process();
+                $stdoutPool = (new self($fileInfo, $originName, $newName, $differ))->process();
 
-                return \React\Promise\resolve(['stdout' => $stdout, 'stdout_pool' => $stdoutPool]);
+                return \React\Promise\resolve([
+                    'input'       => $payload,
+                    'stdout_pool' => $stdoutPool,
+                ]);
             } catch (\Exception $e) {
                 return \React\Promise\reject([
-                    'sent_payload'      => $payload->getPayload(),
+                    'input'             => $payload->getPayload(),
                     'exception_class'   => get_class($e),
                     'exception_message' => $e->getMessage(),
                 ]);

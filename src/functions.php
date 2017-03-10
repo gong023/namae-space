@@ -131,7 +131,7 @@ function traverseToReplace(SplFileInfo $fileInfo, Name $originName, Name $newNam
  * @param string $findName
  * @param string $codeString
  * @param string $tagetRealPath
- * @return array
+ * @return string
  */
 function traverseToFind($findName, $codeString, $tagetRealPath)
 {
@@ -147,7 +147,7 @@ function traverseToFind($findName, $codeString, $tagetRealPath)
         throw new \RuntimeException("[$tagetRealPath] {$e->getMessage()}");
     }
 
-    return [$findVisitor->isFound, $findVisitor->foundString];
+    return $findVisitor->foundString;
 }
 
 //function getMutableStringToReplace($rawCodeString, $rawOriginName, $rawNewName)

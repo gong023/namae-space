@@ -47,6 +47,6 @@ class ReplaceCommand extends Command
 
         $childName = $context->isDryRun() ? DryRun::class : Overwrite::class;
 
-        $this->executeChild($childName, $context);
+        $this->executeChild($childName, $context, $output);
     }
 }

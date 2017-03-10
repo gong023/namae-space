@@ -12,26 +12,10 @@ use WyriHaximus\React\ChildProcess\Messenger\Messenger;
 
 class Overwrite implements  ChildInterface
 {
-    /**
-     * @var SplFileInfo
-     */
     private $fileInfo;
-
-    /**
-     * @var Name
-     */
     private $originName;
-
-    /**
-     * @var Name
-     */
     private $newName;
-
-    /**
-     * @var Differ
-     */
     private $differ;
-
     private $fileDir;
 
     public function __construct(
@@ -54,7 +38,7 @@ class Overwrite implements  ChildInterface
         $code = \NamaeSpace\traverseToReplace($this->fileInfo, $this->originName, $this->newName);
 
         if (!$code->hasModification()) {
-            return ['.', null];
+            return null;
         }
 
         $modified = $code->getModified();
@@ -67,10 +51,9 @@ class Overwrite implements  ChildInterface
         } else {
             file_put_contents($this->fileInfo->getRealPath(), $modified);
         }
-        $diff = "<info>{$this->fileInfo->getFilename()}</info>\n" .
-            $this->differ->diff($code->getOrigin(), $modified);
 
-        return ['!', $diff];
+        return "<info>{$this->fileInfo->getFilename()}</info>\n" .
+            $this->differ->diff($code->getOrigin(), $modified);
     }
 
     /**
@@ -87,12 +70,15 @@ class Overwrite implements  ChildInterface
                 $newName = new Name($payload['new_name']);
                 $differ = new Differ("--- Original\n+++ New\n", false);
                 $fileDir = $payload['project_dir'] . '/' . $payload['replace_dir'];
-                list($stdout, $stdoutPool) = (new self($fileInfo, $originName, $newName, $differ, $fileDir))->process();
+                $stdoutPool = (new self($fileInfo, $originName, $newName, $differ, $fileDir))->process();
 
-                return \React\Promise\resolve(['stdout' => $stdout, 'stdout_pool' => $stdoutPool]);
+                return \React\Promise\resolve([
+                    'input'       => $payload,
+                    'stdout_pool' => $stdoutPool,
+                ]);
             } catch (\Exception $e) {
                 return \React\Promise\reject([
-                    'sent_payload'      => $payload->getPayload(),
+                    'input'             => $payload->getPayload(),
                     'exception_class'   => get_class($e),
                     'exception_message' => $e->getMessage(),
                 ]);

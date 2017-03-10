@@ -38,7 +38,7 @@ class Overwrite implements  ChildInterface
         $code = \NamaeSpace\traverseToReplace($this->fileInfo, $this->originName, $this->newName);
 
         if (!$code->hasModification()) {
-            return ['.', null];
+            return null;
         }
 
         $modified = $code->getModified();
@@ -51,10 +51,9 @@ class Overwrite implements  ChildInterface
         } else {
             file_put_contents($this->fileInfo->getRealPath(), $modified);
         }
-        $diff = "<info>{$this->fileInfo->getFilename()}</info>\n" .
-            $this->differ->diff($code->getOrigin(), $modified);
 
-        return ['!', $diff];
+        return "<info>{$this->fileInfo->getFilename()}</info>\n" .
+            $this->differ->diff($code->getOrigin(), $modified);
     }
 
     /**
@@ -71,12 +70,11 @@ class Overwrite implements  ChildInterface
                 $newName = new Name($payload['new_name']);
                 $differ = new Differ("--- Original\n+++ New\n", false);
                 $fileDir = $payload['project_dir'] . '/' . $payload['replace_dir'];
-                list($stdout, $stdoutPool) = (new self($fileInfo, $originName, $newName, $differ, $fileDir))->process();
+                $stdoutPool = (new self($fileInfo, $originName, $newName, $differ, $fileDir))->process();
 
                 return \React\Promise\resolve([
-                    'input' => $payload,
-                    'stdout' => $stdout,
-                    'stdout_pool' => $stdoutPool
+                    'input'       => $payload,
+                    'stdout_pool' => $stdoutPool,
                 ]);
             } catch (\Exception $e) {
                 return \React\Promise\reject([

@@ -21,7 +21,7 @@ class Find implements ChildInterface
                 $targetRealPath = $payload['target_real_path'];
                 $findName = $payload['find_name'];
                 $codeString = file_get_contents($targetRealPath);
-                list($isFound, $stdoutPool) = \NamaeSpace\traverseToFind($findName, $codeString, $targetRealPath);
+                $stdoutPool = \NamaeSpace\traverseToFind($findName, $codeString, $targetRealPath);
 
                 return \React\Promise\resolve([
                     'input'       => $payload,

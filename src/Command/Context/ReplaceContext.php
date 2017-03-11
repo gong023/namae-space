@@ -69,6 +69,6 @@ class ReplaceContext extends Context
 
     public function isDryRun()
     {
-        return $this->userInput->getOption('dry_run') !== null;
+        return $this->userInput->getOption('dry_run');
     }
 }

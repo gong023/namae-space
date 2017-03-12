@@ -5,6 +5,8 @@ NamaeSpace
 
 NamaeSpace is util command for PHP namespace. this command enables you to find and replace namespace using static analysis.
 
+![gif](https://github.com/gong023/namae-space/blob/master/sample.gif)
+
 ## Installation
 
 ```

@@ -27,6 +27,9 @@ class TraverseToReplaceTest extends \PHPUnit_Framework_TestCase
     public static function fixtureProvider()
     {
         return [
+            ['AddNamespaceToGlobal1', 'Target', 'A\\B\\Target'],
+            ['AddNamespaceToGlobal2', 'Target', 'A\\B\\Target'],
+            ['AddNamespaceToGlobal3', 'Target', 'A\\B\\Target'],
             ['ExprNew', 'Origin', 'Replaced'],
             ['ExprNewFullyQuallyfied', 'Test\\A\\Origin', 'Test\\B\\Replaced'],
             ['StmtUse', 'A\\B\\Origin', 'A\\B\\Replaced'],

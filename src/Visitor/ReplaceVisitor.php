@@ -88,7 +88,7 @@ class ReplaceVisitor extends NodeVisitorAbstract
                     $this->newName->toString()
                 );
             }
-            if ($node->uses[0] instanceof Name) {
+            if (isset($node->uses[0])) {
                 $this->code->stmtUsesPosStart = $node->uses[0]->getAttribute('startFilePos') - 1;
             }
         } elseif ($node instanceof Expr\FuncCall && $node->name instanceof Name && $node->name->isFullyQualified()) {
@@ -141,7 +141,12 @@ class ReplaceVisitor extends NodeVisitorAbstract
     {
         if ($this->code->isTargetClass && !$this->code->named) {
             $inserted = "\nnamespace " . $this->newName->slice(0, count($this->newName->parts) - 1)->toString() . ";\n";
-            $this->code->addModification(strlen("<?php\n"), '', $inserted);
+            if ($this->code->stmtUsesPosStart === null && $this->code->stmtClassLikePosStart) {
+                $pos = $this->code->stmtClassLikePosStart;
+            } else {
+                $pos = strlen("<?php\n");
+            }
+            $this->code->addModification($pos, '', $inserted);
             $this->code->named = true;
         }
 
